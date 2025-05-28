@@ -4,15 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Refit</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="{{ request.url_for('static', path='styles.css') }}">
+  <link rel="icon" type="image/x-icon" href="{{ request.url_for('static', path='favicon.png') }}">
 </head>
 <body>
 
   <!-- 상단 네비게이션 바 -->
-  <header class="navbar">
+<header class="navbar">
     <div class="navbar-container">
-      <img src="{{ url_for('static', filename='img/Refit_home.png') }}" alt="Refit 로고" class="logo" />
+      <img src="{{ request.url_for('static', path='img/Refit_home.png') }}" alt="Refit 로고" class="logo" />
       <nav class="nav-menu">
         <a href="#home">홈</a>
         <a href="#service">서비스 소개</a>

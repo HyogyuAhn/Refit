@@ -183,4 +183,4 @@ def ask():
     return jsonify({"message": "답변 가능한 유사 질문이 없습니다."})
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True)
