@@ -1,35 +1,362 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Refit</title>
-  <link rel="stylesheet" href="{{ request.url_for('static', path='styles.css') }}">
-  <link rel="icon" type="image/x-icon" href="{{ request.url_for('static', path='favicon.png') }}">
+  <title>Refit - 자동화된 고객응답 서비스</title>
+  <link rel="stylesheet" href="{{ request.url_for('static', path='styles.css') }}?v={{ range(1, 10000) | random }}">
+  <link rel="icon" type="image/x-icon" href="{{ request.url_for('static', path='favicon.png') }}?v={{ range(1, 10000) | random }}">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="scroll-snap-container">
+  <!-- 스크롤 네비게이션 -->
+  <nav class="scroll-nav">
+    <ul>
+      <li><a href="#home" class="active"></a></li>
+      <li><a href="#features"></a></li>
+      <li><a href="#how-it-works"></a></li>
+      <li><a href="#pricing"></a></li>
+      <li><a href="#contact"></a></li>
+    </ul>
+  </nav>
 
   <!-- 상단 네비게이션 바 -->
-<header class="navbar">
+  <header class="navbar">
     <div class="navbar-container">
       <img src="{{ request.url_for('static', path='img/Refit_home.png') }}" alt="Refit 로고" class="logo" />
       <nav class="nav-menu">
-        <a href="#home">홈</a>
-        <a href="#service">서비스 소개</a>
-        <a href="#pricing">가격</a>
-        <a href="#contact">문의</a>
+        <a href="#home" class="nav-link">홈</a>
+        <a href="#features" class="nav-link">기능</a>
+        <a href="#how-it-works" class="nav-link">사용방법</a>
+        <a href="#pricing" class="nav-link">가격</a>
+        <a href="#contact" class="nav-link">문의</a>
         <a href="/login" class="btn btn-login">로그인</a>
       </nav>
     </div>
   </header>
 
   <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>반복되는 고객문의, 이제는 Refit이 응답합니다.</h1>
-      <p>소상공인을 위한 AI 기반 고객 응답 자동화 서비스</p>
-      <a href="#service" class="btn">서비스 알아보기</a>
+  <section id="home" class="hero section">
+    <div class="section-container">
+      <div class="hero-content" data-aos="fade-up" data-aos-duration="1000">
+        <h1>반복되는 고객문의, 이제는 Refit이 응답합니다.</h1>
+        <p>소상공인을 위한 AI 기반 고객 응답 자동화 서비스</p>
+        <a href="#features" class="btn btn-primary">AI 서비스 알아보기</a>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <p href="#features">아래로 스크롤하세요</p>
+      <i class="fas fa-chevron-down bounce"></i>
     </div>
   </section>
+
+  <!-- 기능 소개 -->
+  <section id="features" class="features section">
+    <div class="section-container">
+      <h2 data-aos="fade-up">Refit으로 <span class="typewriter"></span></h2>
+      <div class="features-grid">
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="icon"><i class="fas fa-robot"></i></div>
+          <h3>24시간 자동 응답</h3>
+          <p>언제든지 시간 제약 없이 고객의 문의에 즉시 응답합니다.</p>
+        </div>
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+          <div class="icon"><i class="fas fa-brain"></i></div>
+          <h3>지속적 학습</h3>
+          <p>가독성 높은 관리자의 답변으로 학습하여 점점 더 정확해집니다.</p>
+        </div>
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+          <div class="icon"><i class="fas fa-chart-line"></i></div>
+          <h3>문의 분석</h3>
+          <p>문의 패턴을 분석하여 비즈니스 개선에 필요한 응답을 제공합니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 사용 방법 -->
+  <section id="how-it-works" class="how-it-works section">
+    <div class="section-container">
+      <h2 data-aos="fade-up">Refit 사용 방법</h2>
+      <p class="section-subtitle" data-aos="fade-up">간단한 4단계로 비즈니스에 Refit을 적용해보세요</p>
+      
+      <div class="steps">
+        <div class="step" data-aos="fade-up">
+          <div class="step-number">1</div>
+          <div class="step-image">
+            <img src="https://images.unsplash.com/photo-1555421689-491a97ff2f31?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8cmVnaXN0ZXJ8ZW58MHx8MHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" alt="계정 등록" loading="lazy">
+          </div>
+          <div class="step-content">
+            <h3>계정 등록</h3>
+            <p>손쉬운 회원가입 과정으로 더욱 편리한 비지니스를 진행하세요. 이메일과 비밀번호 설정만으로 바로 시작할 수 있습니다.</p>
+            <div class="step-action">
+              <a href="#contact" class="btn btn-outline">계정 만들기</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="step" data-aos="fade-up" data-aos-delay="100">
+          <div class="step-number">2</div>
+          <div class="step-image">
+            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8ZmFxfGVufDB8fDB8fA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" alt="자주 묻는 질문 설정" loading="lazy">
+          </div>
+          <div class="step-content">
+            <h3>자주 묻는 질문 설정</h3>
+            <p>고객이 가장 자주 묻는 질문들을 입력하고 카테고리를 작성하세요. Refit 인공지능이 이를 학습하여 점점 더 정확한 응답을 제공할 것입니다.</p>
+            <div class="step-action">
+              <a href="#pricing" class="btn btn-outline">자주 묻는 질문</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="step" data-aos="fade-up" data-aos-delay="200">
+          <div class="step-number">3</div>
+          <div class="step-image">
+            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Y29kZXxlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" alt="웹사이트에 연동" loading="lazy">
+          </div>
+          <div class="step-content">
+            <h3>웹사이트에 연동</h3>
+            <p>간단한 코드 한 줄만 추가하면 웹사이트, 모바일 앱, 또는 소셜 미디어에 Refit 챗봇을 통합할 수 있습니다. (API 발급 필요)</p>
+            <div class="step-action">
+              <a href="#contact" class="btn btn-outline">연동 가이드</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="step" data-aos="fade-up" data-aos-delay="300">
+          <div class="step-number">4</div>
+          <div class="step-image">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8ZGFzaGJvYXJkfGVufDB8fDB8fA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" alt="실시간 모니터링" loading="lazy">
+          </div>
+          <div class="step-content">
+            <h3>실시간 모니터링</h3>
+            <p>대시보드에서 고객 문의와 AI 응답을 실시간으로 확인하고 필요한 경우 수동으로 작성하세요.</p>
+            <div class="step-action">
+              <a href="#features" class="btn btn-outline">체험하기</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 가격 섹션 -->
+  <section id="pricing" class="pricing section">
+    <div class="section-container">
+      <h2 data-aos="fade-up">합리적인 가격 정책</h2>
+      <p class="section-subtitle" data-aos="fade-up">비즈니스 규모에 맞는 다양한 요금제를 제공합니다</p>
+      
+      <div class="pricing-plans" data-aos="fade-up">
+        <div class="pricing-card starter">
+          <div class="pricing-header">
+            <h3>무료 플랜</h3>
+            <div class="price">
+              <span class="amount">0</span>
+              <span class="period">원</span>
+            </div>
+            <p>소규모 비즈니스를 위한 시작 플랜</p>
+          </div>
+          <div class="pricing-features">
+            <ul>
+              <li><i class="fas fa-check"></i> 일 50건 자동 응답</li>
+              <li><i class="fas fa-check"></i> 챗봇 카테고리 지정</li>
+              <li><i class="fas fa-check"></i> 질문 추천 기능</li>
+              <li class="disabled"><i class="fas fa-times"></i> 고급 분석 대시보드</li>
+              <li class="disabled"><i class="fas fa-times"></i> 자동 학습</li>
+              <li class="disabled"><i class="fas fa-times"></i> 외부 연동 (카카오톡/이메일)</li>
+            </ul>
+          </div>
+          <div class="pricing-cta">
+            <a href="#contact" class="btn btn-outline">무료로 시작하기</a>
+          </div>
+        </div>
+        
+        <div class="pricing-card api">
+          <div class="pricing-header">
+            <h3>API 플랜</h3>
+            <div class="price">
+              <span class="amount">1</span>
+              <span class="period">원/건</span>
+            </div>
+            <p>플랫폼에 독립적으로 사용할 수 있는 API</p>
+          </div>
+          <div class="pricing-features">
+            <ul>
+              <li><i class="fas fa-check"></i> 건당 1원 과금</li>
+              <li><i class="fas fa-check"></i> API 제공</li>
+              <li><i class="fas fa-check"></i> 매월 통합 청구서 발행</li>
+              <li><i class="fas fa-check"></i> 사용량 제한 없음</li>
+              <li><i class="fas fa-check"></i> 개발자 문서 제공</li>
+              <li class="disabled"><i class="fas fa-times"></i> 챗봇 UI 제공</li>
+            </ul>
+          </div>
+          <div class="pricing-cta">
+            <a href="#contact" class="btn btn-outline">API 키 받기</a>
+          </div>
+        </div>
+        
+        <div class="pricing-card enterprise highlighted">
+          <div class="popular-tag">추천</div>
+          <div class="pricing-header">
+            <h3>엔터프라이즈</h3>
+            <div class="price">
+              <span class="amount">문의</span>
+              <span class="period"></span>
+            </div>
+            <p>기업 맞춤형 통합 서비스</p>
+          </div>
+          <div class="pricing-features">
+            <ul>
+              <li><i class="fas fa-check"></i> 무제한 자동 응답</li>
+              <li><i class="fas fa-check"></i> 고급 분석 대시보드</li>
+              <li><i class="fas fa-check"></i> 우선 기술 지원</li>
+              <li><i class="fas fa-check"></i> API 제공</li>
+              <li><i class="fas fa-check"></i> 카카오톡/이메일 연동</li>
+              <li><i class="fas fa-check"></i> 고급 모델 지원</li>
+            </ul>
+          </div>
+          <div class="pricing-cta">
+            <a href="#contact" class="btn btn-primary">문의하기</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pricing-note" data-aos="fade-up">
+        <p>모든 요금제는 부가세 별도입니다. 자세한 내용은 <a href="#">이용약관</a>을 참조하세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 문의 섹션 -->
+  <section id="contact" class="contact section">
+    <div class="section-container">
+      <div class="contact-header" data-aos="fade-up">
+        <h2>문의하기</h2>
+        <p class="section-subtitle">언제든지 편하게 문의해 주세요</p>
+      </div>
+      
+      <div class="contact-container" data-aos="fade-up">
+        <div class="contact-info">
+          <h3>연락처 정보</h3>
+          
+          <div class="contact-item">
+            <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="content">
+              <h4>주소</h4>
+              <p>인하대학교 5호관 동쪽 지하 004</p>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="icon"><i class="fas fa-phone-alt"></i></div>
+            <div class="content">
+              <h4>전화</h4>
+              <p>안받음</p>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="icon"><i class="fas fa-envelope"></i></div>
+            <div class="content">
+              <h4>이메일</h4>
+              <p>안받음</p>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="icon"><i class="fas fa-clock"></i></div>
+            <div class="content">
+              <h4>영업시간</h4>
+              <p>운영 접음</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="contact-form">
+          <h3>문의 양식</h3>
+          <form action="#" method="post">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" name="name" placeholder="이름을 입력하세요" required>
+              </div>
+              <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" placeholder="이메일을 입력하세요" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="subject">제목</label>
+              <input type="text" id="subject" name="subject" placeholder="제목을 입력하세요" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="message">메시지</label>
+              <textarea id="message" name="message" rows="5" placeholder="메시지를 입력하세요" required></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">문의 보내기</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 섹션 -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-about">
+          <img src="{{ request.url_for('static', path='img/Refit_home.png') }}" alt="Refit 로고" class="footer-logo">
+          <p class="footer-tagline">AI 기반 고객 응답 자동화</p>
+          <!-- 소셜 미디어 아이콘 제거 -->
+        </div>
+        
+        <div class="footer-links">
+          <div class="footer-links-column">
+            <h4>서비스</h4>
+            <div class="footer-links-list">
+              <div class="footer-link-item"><a href="#features">주요 기능</a></div>
+              <div class="footer-link-item"><a href="#how-it-works">사용 방법</a></div>
+              <div class="footer-link-item"><a href="#pricing">가격</a></div>
+              <div class="footer-link-item"><a href="#contact">문의</a></div>
+            </div>
+          </div>
+          <div class="footer-links-column">
+            <h4>팀</h4>
+            <div class="footer-links-list">
+              <div class="footer-link-item"><a href="#">팀 소개</a></div>
+              <div class="footer-link-item"><a href="#">깃허브</a></div>
+            </div>
+          </div>
+          <div class="footer-links-column">
+            <h4>문의</h4>
+            <div class="footer-links-list">
+              <div class="footer-link-item"><a href="#contact">문의하기</a></div>
+              <div class="footer-link-item"><a href="#">자주 묻는 질문</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p> 2025 <span>파기응 3조</span> Refit.</p>
+        <div class="footer-legal">
+          <a href="#">이용약관 </a>
+          <a href="#">개인정보 처리방침  </a>
+          <a href="#">쿠키 정책</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- JavaScript 파일 불러오기 -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+  <script src="{{ request.url_for('static', path='js/main.js') }}"></script>
 </body>
 </html>
