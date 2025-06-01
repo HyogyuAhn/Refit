@@ -32,7 +32,11 @@
         <a href="#how-it-works" class="nav-link">사용방법</a>
         <a href="#pricing" class="nav-link">가격</a>
         <a href="#contact" class="nav-link">문의</a>
+        {% if user %}
+        <a href="/dashboard" class="btn btn-login">대시보드</a>
+        {% else %}
         <a href="/login" class="btn btn-login">로그인</a>
+        {% endif %}
       </nav>
     </div>
   </header>
@@ -47,8 +51,10 @@
       </div>
     </div>
     <div class="scroll-indicator">
-      <p href="#features">아래로 스크롤하세요</p>
-      <i class="fas fa-chevron-down bounce"></i>
+      <a href="#features">아래로 스크롤하세요
+        <br>
+        <i href="#features" class="fas fa-chevron-down bounce"></i>
+      </a>
     </div>
   </section>
 
@@ -92,7 +98,11 @@
             <h3>계정 등록</h3>
             <p>손쉬운 회원가입 과정으로 더욱 편리한 비지니스를 진행하세요. 이메일과 비밀번호 설정만으로 바로 시작할 수 있습니다.</p>
             <div class="step-action">
-              <a href="#contact" class="btn btn-outline">계정 만들기</a>
+              {% if user %}
+                <a href="/dashboard" class="btn btn-outline">대시보드로 이동</a>
+              {% else %}
+                <a href="/register" class="btn btn-outline">계정 만들기</a>
+              {% endif %}
             </div>
           </div>
         </div>

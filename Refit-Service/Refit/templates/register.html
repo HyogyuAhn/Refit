@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>Refit - 회원가입</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .category-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-add-category {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-add-category:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card register-card">
+            <div class="auth-header">
+                <a href="/" class="logo-link">
+                    <h2 class="logo">REFIT</h2>
+                </a>
+                <h1>회원가입</h1>
+                <p>AI 기반 고객 응답 자동화 서비스를 시작하세요</p>
+            </div>
+            
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="fullname">이름</label>
+                    <input type="text" id="fullname" name="fullname" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="business_name">사업자 이름</label>
+                    <input type="text" id="business_name" name="business_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">아이디</label>
+                    <div class="input-with-button">
+                        <input type="text" id="username" name="username" required>
+                        <button type="button" id="check-username" class="btn btn-outline btn-sm">중복확인</button>
+                    </div>
+                    <p class="validation-message" id="username-validation"></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">비밀번호 (영어 대소문자, 숫자, 기호 포함 8~16자리)</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password" name="password" required>
+                        <i class="fas fa-eye-slash toggle-password"></i>
+                    </div>
+                    <p class="validation-message" id="password-validation"></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password_confirm">비밀번호 확인</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password_confirm" name="password_confirm" required>
+                        <i class="fas fa-eye-slash toggle-password"></i>
+                    </div>
+                    <p class="validation-message" id="password-confirm-validation"></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="categories">사업자 질문 카테고리</label>
+                    <div class="categories-container">
+                        <div class="category-input-group">
+                            <input type="text" id="categories" name="categories" placeholder="예: 결제, 배송, 환불">
+                            <button type="button" id="add-category-btn" class="btn btn-add-category">추가</button>
+                        </div>
+                        <div class="category-chips" id="category-chips"></div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary auth-button" id="register-button" disabled>회원가입</button>
+                
+                <div class="form-links">
+                    <a href="/login" class="login-link">이미 계정이 있으신가요? <span>로그인</span></a>
+                </div>
+            </form>
+            
+            <div class="auth-message" id="auth-message"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+                toggle.addEventListener('click', function() {
+                    const passwordInput = this.previousElementSibling;
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+            });
+            
+            const categoriesInput = document.getElementById('categories');
+            const categoryChips = document.getElementById('category-chips');
+            const addCategoryBtn = document.getElementById('add-category-btn');
+
+            categoriesInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addChip(this.value.trim());
+                    this.value = '';
+                }
+            });
+
+            addCategoryBtn.addEventListener('click', function() {
+                addChip(categoriesInput.value.trim());
+                categoriesInput.value = '';
+                categoriesInput.focus();
+            });
+            
+            function addChip(text) {
+                if (!text) return;
+                
+                const chip = text;
+                
+                const chipElement = document.createElement('div');
+                chipElement.className = 'category-chip';
+                chipElement.innerHTML = `
+                    <span>${chip}</span>
+                    <i class="fas fa-times remove-chip"></i>
+                `;
+                categoryChips.appendChild(chipElement);
+                
+                chipElement.querySelector('.remove-chip').addEventListener('click', function() {
+                    chipElement.remove();
+                    updateCategoriesInput();
+                });
+                
+                updateCategoriesInput();
+            }
+            
+            function updateCategoriesInput() {
+                const chips = Array.from(categoryChips.querySelectorAll('.category-chip span')).map(span => span.textContent);
+                categoriesInput.value = '';
+                document.querySelector('input[name="categories"]').value = chips.join(',');
+            }
+            
+            document.getElementById('check-username').addEventListener('click', async function() {
+                const username = document.getElementById('username').value;
+                const usernameValidation = document.getElementById('username-validation');
+                
+                if (!username) {
+                    usernameValidation.textContent = '아이디를 입력해주세요.';
+                    usernameValidation.className = 'validation-message error';
+                    return;
+                }
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    
+                    const response = await fetch('/api/check-username', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.available) {
+                        usernameValidation.textContent = '사용 가능한 아이디입니다.';
+                        usernameValidation.className = 'validation-message success';
+                        document.getElementById('username').dataset.valid = 'true';
+                    } else {
+                        usernameValidation.textContent = '이미 사용 중인 아이디입니다.';
+                        usernameValidation.className = 'validation-message error';
+                        document.getElementById('username').dataset.valid = 'false';
+                    }
+                    
+                    validateForm();
+                    
+                } catch (error) {
+                    usernameValidation.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+                    usernameValidation.className = 'validation-message error';
+                }
+            });
+            
+            const passwordInput = document.getElementById('password');
+            const passwordConfirmInput = document.getElementById('password_confirm');
+            const passwordValidation = document.getElementById('password-validation');
+            const passwordConfirmValidation = document.getElementById('password-confirm-validation');
+            
+            passwordInput.addEventListener('input', validatePassword);
+            passwordConfirmInput.addEventListener('input', validatePasswordConfirm);
+            
+            function validatePassword() {
+                const password = passwordInput.value;
+                
+                if (password.length < 8 || password.length > 16) {
+                    passwordValidation.textContent = '비밀번호는 8~16자리여야 합니다.';
+                    passwordValidation.className = 'validation-message error';
+                    passwordInput.dataset.valid = 'false';
+                } else if (!(/[A-Z]/.test(password))) {
+                    passwordValidation.textContent = '대문자를 포함해야 합니다.';
+                    passwordValidation.className = 'validation-message error';
+                    passwordInput.dataset.valid = 'false';
+                } else if (!(/[a-z]/.test(password))) {
+                    passwordValidation.textContent = '소문자를 포함해야 합니다.';
+                    passwordValidation.className = 'validation-message error';
+                    passwordInput.dataset.valid = 'false';
+                } else if (!(/[0-9]/.test(password))) {
+                    passwordValidation.textContent = '숫자를 포함해야 합니다.';
+                    passwordValidation.className = 'validation-message error';
+                    passwordInput.dataset.valid = 'false';
+                } else if (!(/[!@#$%^&*(),.?":{}|<>]/.test(password))) {
+                    passwordValidation.textContent = '특수문자를 포함해야 합니다.';
+                    passwordValidation.className = 'validation-message error';
+                    passwordInput.dataset.valid = 'false';
+                } else {
+                    passwordValidation.textContent = '사용 가능한 비밀번호입니다.';
+                    passwordValidation.className = 'validation-message success';
+                    passwordInput.dataset.valid = 'true';
+                }
+                
+                validatePasswordConfirm();
+                validateForm();
+            }
+            
+            function validatePasswordConfirm() {
+                const password = passwordInput.value;
+                const passwordConfirm = passwordConfirmInput.value;
+                
+                if (!passwordConfirm) {
+                    passwordConfirmValidation.textContent = '';
+                    passwordConfirmInput.dataset.valid = 'false';
+                } else if (password !== passwordConfirm) {
+                    passwordConfirmValidation.textContent = '비밀번호가 일치하지 않습니다.';
+                    passwordConfirmValidation.className = 'validation-message error';
+                    passwordConfirmInput.dataset.valid = 'false';
+                } else {
+                    passwordConfirmValidation.textContent = '비밀번호가 일치합니다.';
+                    passwordConfirmValidation.className = 'validation-message success';
+                    passwordConfirmInput.dataset.valid = 'true';
+                }
+                
+                validateForm();
+            }
+            
+            function validateForm() {
+                const isUsernameValid = document.getElementById('username').dataset.valid === 'true';
+                const isPasswordValid = passwordInput.dataset.valid === 'true';
+                const isPasswordConfirmValid = passwordConfirmInput.dataset.valid === 'true';
+                
+                document.getElementById('register-button').disabled = !(isUsernameValid && isPasswordValid && isPasswordConfirmValid);
+            }
+            
+            document.getElementById('register-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const messageElement = document.getElementById('auth-message');
+                messageElement.style.display = 'none';
+                
+                const categoriesArray = Array.from(categoryChips.querySelectorAll('.category-chip span'))
+                    .map(span => span.textContent.trim());
+                
+                const formData = {
+                    fullname: document.getElementById('fullname').value,
+                    business_name: document.getElementById('business_name').value,
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    password_confirm: document.getElementById('password_confirm').value,
+                    categories: categoriesArray
+                };
+                
+                try {
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || '회원가입 중 오류가 발생했습니다.');
+                    }
+                    
+                    messageElement.textContent = '회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.';
+                    messageElement.className = 'auth-message success';
+                    messageElement.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                    
+                } catch (error) {
+                    messageElement.textContent = error.message;
+                    messageElement.className = 'auth-message error';
+                    messageElement.style.display = 'block';
+                    console.error('Registration error:', error);
+                }
+            });
+            
+            function showMessage(message, type = 'success') {
+                const messageElement = document.getElementById('auth-message');
+                messageElement.textContent = message;
+                messageElement.className = 'auth-message ' + type;
+                messageElement.style.display = 'block';
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageElement.style.display = 'none';
+                    }, 5000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

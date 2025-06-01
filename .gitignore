@@ -4,3 +4,9 @@ Refit-Service/Refit/static/.DS_Store
 Refit-Service/__pycache__
 Refit-Service/Refit/__pycache__
 Refit-Service/Refit/routers/__pycache__
+
+Refit.db
+
+Refit-Service/.env
+Refit-Service/Refit/database.py
+Refit-Service/Refit/security.py

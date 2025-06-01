@@ -4,6 +4,11 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 import os
 
+from Refit.database import engine
+from Refit import models
+
+models.Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="Refit",
     description="소상공인을 위한 AI 기반 고객 응답 자동화 서비스",
@@ -15,8 +20,9 @@ app = FastAPI(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "Refit", "static")), name="static")
 
-from Refit.routers import web
+from Refit.routers import web, auth
 app.include_router(web.router, tags=["web"])
+app.include_router(auth.router, tags=["auth"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
