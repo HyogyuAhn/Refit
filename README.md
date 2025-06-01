@@ -2,12 +2,18 @@
 
 ```bash
 Refit
-├── Web
-│   ├── static
-│   │   └── [[ Web Data 파일 ]]
-│   ├── templates
-│   │   └── [[ Html 템플릿 ]]
-│   └── app.py
+├── Refit-Service
+│   ├── Refit
+│   │   ├── static
+│   │   │   └── [[ Web Data 파일 ]]
+│   │   ├── templates
+│   │   │   └── [[ Html 템플릿 ]]
+│   │   ├── routers
+│   │   │   └── [[ 라우터 ]]
+│   │   └── app.py
+│   ├── models.py
+│   ├── schemas.py
+│   └── main.py
 │
 ├── models
 │   ├── algorithms
@@ -16,8 +22,12 @@ Refit
 │   │   └── [[ 데이터셋 ]]
 │   └── embeddings
 │       └── [[ 임베딩 폴더 ]]
-.
-.
-.
-└── README.md
+│
+├── KoGPT2
+│   └── [[ KoGPT2 모델 ]]
+│
+├── midpr
+│   └── [[ 중간 발표 시연용 ]]
+│
+├── README.md
 ```
