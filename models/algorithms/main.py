@@ -5,6 +5,9 @@ from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+from kogpt import generate_response  # 상단에 추가
+from validator.answer_validator import is_answer_aligned_with_db
+
 
 # --- 1. 임베딩 모델 설정 ---
 embedding_model_name = "jhgan/ko-sbert-sts"
@@ -129,15 +132,25 @@ def main():
     # 7.7 가공 필요 판단 및 처리
     top_doc, top_score = scored_docs[0]
     answer_text = top_doc.metadata.get('answer', '')
+    question_text = question
 
-    if not needs_edit(top_score, question):
-        print("\n[자동응답 - 유사도 높고 가공 불필요]")
+    # 🔹 회사 정책에서 해당 카테고리 정책값 추출 (예: "14일")
+    db_value = company_policy.get(category, "")
+
+    # 🔍 유사도 + 정책 교차검증 통합
+    if not needs_edit(top_score, question_text) and is_answer_aligned_with_db(answer_text, db_value):
+        print("\n[자동응답 - 유사도 높고 정책도 일치]")
         print(f"답변: {answer_text}")
     else:
         print("\n[KOGPT2 생성형 응답 - 가공 필요]")
         prompt_text = make_final_prompt(question, category, user_orders, company_policy)
+        print("\n📨 Prompt 입력값:")
         print(prompt_text)
-        # TODO: KOGPT2 호출
+
+        response = generate_response(prompt_text)
+        print("\n🤖 생성된 KoGPT2 응답:")
+        print(response)
+
 
 if __name__ == "__main__":
     main()
