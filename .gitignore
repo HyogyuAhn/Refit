@@ -10,3 +10,14 @@ Refit.db
 Refit-Service/.env
 Refit-Service/Refit/database.py
 Refit-Service/Refit/security.py
+
+models/re/tracking/tracking_system.py
+models/re/data/db/firestore_reader.py
+models/re/__pycache__
+models/re/tracking/__pycache__
+models/re/validator/__pycache__
+models/re/refit_firebase_key.json
+models/re/.env
+models/re/create_env.py
+
+KoGPT2

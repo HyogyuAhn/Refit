@@ -1,0 +1,104 @@
+[
+    {
+        "delivery": {
+            "tracking_number": "CJ345678912KR",
+            "recipient": "박상준",
+            "address": "인천광역시 미추홀구 인하로 100 60주년 기념관 906호",
+            "status": "배송준비중",
+            "phone": "010-1234-5678"
+        },
+        "items": [
+            {
+                "name": "버뮤다 팬츠",
+                "quantity": 1,
+                "product_id": "P1005",
+                "price": 30000
+            },
+            {
+                "name": "오버핏 검정 반팔",
+                "quantity": 2,
+                "product_id": "P1006",
+                "price": 35000
+            }
+        ],
+        "payment": {
+            "method_detail": "하나카드",
+            "method": "카드결제",
+            "status": "결제완료",
+            "amount": 100000
+        },
+        "user_id": "USER1234",
+        "order_id": "ORD20250603001",
+        "order_date": "2025-06-03T01:53:14.456130",
+        "order_status": "배송준비중",
+        "id": "LtfIeCYFUgz32lNzYOqB"
+    },
+    {
+        "delivery": {
+            "tracking_number": "CJ234567891KR",
+            "recipient": "박상준",
+            "address": "인천광역시 미추홀구 인하로 100 60주년 기념관 906호",
+            "status": "배송준비중",
+            "phone": "010-1234-5678"
+        },
+        "items": [
+            {
+                "name": "나이키 에어포스",
+                "quantity": 1,
+                "product_id": "P1003",
+                "price": 120000
+            },
+            {
+                "name": "나이키 양말",
+                "quantity": 3,
+                "product_id": "P1004",
+                "price": 5000
+            }
+        ],
+        "payment": {
+            "method_detail": "무통장 입금",
+            "method": "계좌이체",
+            "status": "결제완료",
+            "amount": 135000
+        },
+        "user_id": "USER1234",
+        "order_id": "ORD20250601001",
+        "order_date": "2025-06-03T01:35:48.100707",
+        "order_status": "배송준비중",
+        "id": "PI99jGH1CzacKVooCyUp"
+    },
+    {
+        "delivery": {
+            "tracking_number": "CJ123456789KR",
+            "recipient": "박상준",
+            "address": "인천광역시 미추홀구 인하로 100 60주년 기념관 906호",
+            "status": "배송중",
+            "phone": "010-1234-5678"
+        },
+        "items": [
+            {
+                "name": "흰색 반팔티",
+                "quantity": 1,
+                "product_id": "P1001",
+                "price": 25000
+            },
+            {
+                "name": "청바지",
+                "quantity": 1,
+                "product_id": "P1002",
+                "price": 45000
+            }
+        ],
+        "payment": {
+            "method_detail": "국민카드",
+            "method": "카드결제",
+            "status": "결제완료",
+            "amount": 70000
+        },
+        "user_id": "USER1234",
+        "order_id": "ORD20250528001",
+        "order_date": "2025-06-03T01:40:16.885387",
+        "order_status": "배송중",
+        "id": "V1Frim5djRhSkXTZDOvT"
+    }
+]
