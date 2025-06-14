@@ -22,10 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-
-  
-
-  
   document.addEventListener('DOMContentLoaded', function() {
     const howItWorksSection = document.getElementById('how-it-works');
     const steps = document.querySelectorAll('.how-it-works .step');
@@ -40,10 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
       step.removeAttribute('data-aos-delay');
     });
     
-  
-    
-
-
     const stepObservers = [];
     
     steps.forEach((step, index) => {
