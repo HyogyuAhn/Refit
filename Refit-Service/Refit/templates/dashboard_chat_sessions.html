@@ -1,0 +1,339 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}채팅 세션 관리 - Refit 대시보드{% endblock %}
+
+{% block header_title %}
+<h1>채팅 세션 관리</h1>
+<p>사용자 챗봇 대화 세션을 관리하고 통계를 확인할 수 있습니다.</p>
+{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block page_description %}{% endblock %}
+
+{% block additional_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+<style>
+  .chat-session-card {
+    border-radius: 10px;
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chat-session-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .chat-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .chat-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-color);
+  }
+  
+  .chat-date {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  
+  .chat-content {
+    padding: 1rem 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  
+  .chat-footer {
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--card-bg-secondary);
+    border-radius: 0 0 10px 10px;
+  }
+  
+  .chat-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  
+  .chat-actions .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .filter-wrapper {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--card-shadow);
+  }
+  
+  .status-active {
+    color: var(--success-color);
+  }
+  
+  .status-closed {
+    color: var(--text-muted);
+  }
+  
+  .search-input {
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    width: 100%;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+  }
+  
+  .chat-preview {
+    font-size: 0.95rem;
+    margin: 0.5rem 0 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    color: var(--text-muted);
+  }
+  
+  .chat-sessions-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    overflow-y: auto;
+    max-height: none;
+  }
+  
+  @media (max-width: 768px) {
+    .chat-sessions-container {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .d-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    width: 100%;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-content">
+
+  <div class="filter-wrapper">
+    <div class="row filter-row">
+      <div class="col-md-5 mb-2 mb-md-0">
+        <input type="text" id="chatSearchInput" class="search-input" placeholder="채팅 내용 검색">
+      </div>
+      <div class="col-md-3 mb-2 mb-md-0">
+        <select id="chatStatus" class="form-select">
+          <option value="all">모든 상태</option>
+          <option value="active">활성 세션</option>
+          <option value="closed">종료된 세션</option>
+        </select>
+      </div>
+      <div class="col-md-3 mb-2 mb-md-0">
+        <select id="sortBy" class="form-select">
+          <option value="recent">최신순</option>
+          <option value="oldest">오래된순</option>
+          <option value="messages">메시지 많은순</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  <div id="chatSessionsList" class="chat-sessions-container">
+    <!-- 채팅 세션 카드는 JavaScript로 여기에 추가됩니다 -->
+  </div>
+  
+  <div id="noChatSessionsMessage" style="display: none;" class="empty-state">
+    <i class="fas fa-comments-slash empty-icon"></i>
+    <h3>채팅 세션이 없습니다</h3>
+    <p>아직 사용자와의 채팅 세션이 없습니다.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const chatSessions = [
+      {
+        id: 'chat1',
+        title: '상품 추천 문의',
+        preview: '안녕하세요, 저에게 어울리는 운동화를 추천해주세요.',
+        date: '2025-06-16T10:15:30',
+        user: '김철수',
+        messageCount: 12,
+        status: 'active'
+      },
+      {
+        id: 'chat2',
+        title: '결제 문제 해결',
+        preview: '결제가 완료되었는데 주문 내역에 표시되지 않습니다.',
+        date: '2025-06-15T14:22:45',
+        user: '이영희',
+        messageCount: 8,
+        status: 'closed'
+      },
+      {
+        id: 'chat3',
+        title: '제품 사용 방법',
+        preview: '새로 구매한 제품의 설정 방법을 알려주세요.',
+        date: '2025-06-16T09:05:18',
+        user: '박민지',
+        messageCount: 15,
+        status: 'active'
+      },
+      {
+        id: 'chat4',
+        title: '교환/환불 문의',
+        preview: '사이즈가 맞지 않아 교환하고 싶습니다.',
+        date: '2025-06-14T16:30:22',
+        user: '정대현',
+        messageCount: 6,
+        status: 'closed'
+      },
+      {
+        id: 'chat5',
+        title: '배송 지연 문의',
+        preview: '주문한 상품이 아직 도착하지 않았습니다.',
+        date: '2025-06-15T11:45:10',
+        user: '홍길동',
+        messageCount: 10,
+        status: 'active'
+      }
+    ];
+    
+    renderChatSessions(chatSessions);
+    
+    document.getElementById('chatSearchInput').addEventListener('input', filterChatSessions);
+    document.getElementById('chatStatus').addEventListener('change', filterChatSessions);
+    document.getElementById('sortBy').addEventListener('change', filterChatSessions);
+    
+    function filterChatSessions() {
+      const searchTerm = document.getElementById('chatSearchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('chatStatus').value;
+      const sortValue = document.getElementById('sortBy').value;
+      
+      let filteredChats = chatSessions.filter(chat => {
+        const matchesSearch = 
+          chat.title.toLowerCase().includes(searchTerm) || 
+          chat.preview.toLowerCase().includes(searchTerm) ||
+          chat.user.toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = 
+          statusFilter === 'all' || 
+          (statusFilter === 'active' && chat.status === 'active') ||
+          (statusFilter === 'closed' && chat.status === 'closed');
+        
+        return matchesSearch && matchesStatus;
+      });
+      
+      filteredChats.sort((a, b) => {
+        switch(sortValue) {
+          case 'oldest':
+            return new Date(a.date) - new Date(b.date);
+          case 'messages':
+            return b.messageCount - a.messageCount;
+          case 'recent':
+          default:
+            return new Date(b.date) - new Date(a.date);
+        }
+      });
+      
+      renderChatSessions(filteredChats);
+    }
+    
+    function renderChatSessions(sessions) {
+      const chatSessionsList = document.getElementById('chatSessionsList');
+      const noChatSessionsMessage = document.getElementById('noChatSessionsMessage');
+      
+      chatSessionsList.innerHTML = '';
+      
+      if (sessions.length === 0) {
+        chatSessionsList.style.display = 'none';
+        noChatSessionsMessage.style.display = 'block';
+        return;
+      }
+      
+      chatSessionsList.style.display = 'block';
+      noChatSessionsMessage.style.display = 'none';
+      
+      sessions.forEach(chat => {
+        const chatDate = new Date(chat.date);
+        const formattedDate = `${chatDate.getFullYear()}-${String(chatDate.getMonth() + 1).padStart(2, '0')}-${String(chatDate.getDate()).padStart(2, '0')}`;
+        const formattedTime = `${String(chatDate.getHours()).padStart(2, '0')}:${String(chatDate.getMinutes()).padStart(2, '0')}`;
+        
+        const card = document.createElement('div');
+        card.className = 'chat-session-card';
+        card.setAttribute('data-chat-id', chat.id);
+        
+        card.innerHTML = `
+          <div class="chat-header">
+            <h3 class="chat-title">${chat.title}</h3>
+            <div class="chat-date">${formattedDate} ${formattedTime}</div>
+          </div>
+          <div class="chat-content">
+            <div class="chat-preview">${chat.preview}</div>
+            <div class="d-flex">
+              <span class="badge bg-light text-dark">사용자: ${chat.user}</span>
+              <span class="status-badge ${chat.status === 'active' ? 'status-active' : 'status-closed'}>
+                <i class="fas ${chat.status === 'active' ? 'fa-circle' : 'fa-circle-check'}"></i>
+                ${chat.status === 'active' ? '진행 중' : '종료됨'}
+              </span>
+            </div>
+          </div>
+          <div class="chat-footer">
+            <div class="chat-meta">
+              <span><i class="fas fa-comment-dots"></i> ${chat.messageCount}개 메시지</span>
+            </div>
+            <div class="chat-actions">
+              <button class="btn btn-sm btn-outline-primary view-chat" data-chat-id="${chat.id}">
+                <i class="fas fa-eye"></i> 보기
+              </button>
+              <button class="btn btn-sm btn-outline-secondary ${chat.status === 'active' ? '' : 'd-none'}" data-chat-id="${chat.id}">
+                <i class="fas fa-reply"></i> 응답
+              </button>
+              <button class="btn btn-sm btn-outline-danger" data-chat-id="${chat.id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        chatSessionsList.appendChild(card);
+      });
+
+      document.querySelectorAll('.view-chat').forEach(button => {
+        button.addEventListener('click', function() {
+          const chatId = this.getAttribute('data-chat-id');
+          alert(`채팅 세션 ID ${chatId} 상세 보기`);
+        });
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends "dashboard.html" %}
+
+{% block title %}API 키 관리 - Refit{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="h3 mb-0 text-gray-800">API 키 관리</h1>
+                <p class="mb-4">API 키를 생성하고 관리합니다. API 키를 통해 채팅 위젯을 사용할 수 있습니다.</p>
+            </div>
+        </div>
+        
+        <!-- API 키 목록 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">내 API 키</h6>
+                        <button id="createApiKeyBtn" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#createApiKeyModal">
+                            <i class="fas fa-plus"></i> 새 API 키 생성
+                        </button>
+                    </div>
+                    <div class="card-body" id="apiKeysList">
+                        <div class="alert alert-info d-none" id="noApiKeysMessage">
+                            아직 생성된 API 키가 없습니다. 채팅 위젯을 사용하려면 API 키를 생성해주세요.
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="apiKeysTable">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>생성일</th>
+                                        <th>마지막 사용</th>
+                                        <th>사용 횟수</th>
+                                        <th>상태</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apiKeysTableBody">
+                                    <!-- API 키 목록이 여기에 동적으로 추가됨 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 위젯 사용 안내 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">채팅 위젯 사용 방법</h6>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="mb-3">웹사이트에 채팅 위젯 추가하기</h5>
+                        <p>아래 코드를 웹사이트의 &lt;body&gt; 태그 안에 추가하세요. API_KEY를 발급받은 키로 교체하세요.</p>
+                        <div class="bg-light p-3 mb-4 rounded">
+                            <code>
+                                &lt;script src="https://refit.ai/widget.js" defer&gt;&lt;/script&gt;<br>
+                                &lt;script&gt;<br>
+                                &nbsp;&nbsp;document.addEventListener('DOMContentLoaded', function() {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;RefitChat.init({<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apiKey: "YOUR_API_KEY",<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;position: "bottom-right", // "bottom-right", "bottom-left", "top-right", "top-left"<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theme: "light", // "light" 또는 "dark"<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+                                &nbsp;&nbsp;});<br>
+                                &lt;/script&gt;
+                            </code>
+                        </div>
+                        
+                        <h5 class="mb-3">채팅 위젯 사용 시 주의사항</h5>
+                        <ul>
+                            <li>발급받은 API 키는 안전하게 보관하세요.</li>
+                            <li>키가 노출된 경우 즉시 삭제하고 새로 발급받아야 합니다.</li>
+                            <li>API 키는 도메인 제한이 없으므로 어떤 웹사이트에서도 사용할 수 있습니다.</li>
+                            <li>발급된 키의 일일 사용량은 제한되어 있으며, 초과 시 추가 요금이 발생할 수 있습니다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API 키 생성 모달 -->
+<div class="modal fade" id="createApiKeyModal" tabindex="-1" role="dialog" aria-labelledby="createApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createApiKeyModalLabel">새 API 키 생성</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createApiKeyForm">
+                    <div class="form-group">
+                        <label for="keyName">API 키 이름</label>
+                        <input type="text" class="form-control" id="keyName" placeholder="예: 회사 웹사이트" required>
+                        <small class="form-text text-muted">이 이름은 API 키를 구별하는데 사용됩니다.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">비밀번호 확인</label>
+                        <input type="password" class="form-control" id="userPassword" placeholder="현재 비밀번호를 입력하세요" required>
+                        <small class="form-text text-muted">API 키 생성을 위해 비밀번호 확인이 필요합니다.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="submitCreateApiKey">생성</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API 키 표시 모달 -->
+<div class="modal fade" id="showApiKeyModal" tabindex="-1" role="dialog" aria-labelledby="showApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="showApiKeyModalLabel">API 키</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>주의!</strong> 이 API 키는 한 번만 표시됩니다. 안전한 곳에 복사해 두세요.
+                </div>
+                <div class="form-group">
+                    <label for="apiKeyToken">API 키</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="apiKeyToken" readonly>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="copyApiKeyBtn">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API 키 삭제 확인 모달 -->
+<div class="modal fade" id="deleteApiKeyModal" tabindex="-1" role="dialog" aria-labelledby="deleteApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteApiKeyModalLabel">API 키 삭제</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>정말로 이 API 키를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.</p>
+                <p><strong>이름: </strong><span id="deleteKeyName"></span></p>
+                
+                <form id="deleteApiKeyForm">
+                    <div class="form-group">
+                        <label for="deleteUserPassword">비밀번호 확인</label>
+                        <input type="password" class="form-control" id="deleteUserPassword" placeholder="현재 비밀번호를 입력하세요" required>
+                        <small class="form-text text-muted">API 키 삭제를 위해 비밀번호 확인이 필요합니다.</small>
+                    </div>
+                    <input type="hidden" id="deleteApiKeyId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteApiKey">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 기존 키 조회 비밀번호 확인 모달 -->
+<div class="modal fade" id="viewApiKeyModal" tabindex="-1" role="dialog" aria-labelledby="viewApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewApiKeyModalLabel">API 키 조회</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>보안상의 이유로 API 키를 조회하기 위해 비밀번호 확인이 필요합니다.</p>
+                <form id="viewApiKeyForm">
+                    <div class="form-group">
+                        <label for="viewUserPassword">비밀번호 확인</label>
+                        <input type="password" class="form-control" id="viewUserPassword" placeholder="현재 비밀번호를 입력하세요" required>
+                    </div>
+                    <input type="hidden" id="viewApiKeyId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmViewApiKey">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API 키 활성화/비활성화 모달 -->
+<div class="modal fade" id="toggleApiKeyModal" tabindex="-1" role="dialog" aria-labelledby="toggleApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="toggleApiKeyModalLabel">API 키 상태 변경</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="toggleApiKeyMessage"></p>
+                <input type="hidden" id="toggleApiKeyId">
+                <input type="hidden" id="toggleApiKeyStatus">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmToggleApiKey">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 알림 토스트 -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="5000">
+        <div class="toast-header">
+            <strong class="mr-auto" id="toastTitle">알림</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard_api_keys.js"></script>
+{% endblock %}

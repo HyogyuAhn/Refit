@@ -100,7 +100,30 @@
                     const result = await response.json();
                     
                     if (response.ok) {
-                        window.location.href = '/';
+                        if (result.access_token) {
+                            localStorage.setItem('access_token', result.access_token);
+                            
+                            const date = new Date();
+                            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+                            document.cookie = `access_token=${result.access_token}; expires=${date.toUTCString()}; path=/`;
+                            
+                            console.log('인증 토큰이 성공적으로 저장되었습니다.');
+                        } else {
+                            console.warn('서버 응답에 토큰이 없습니다.');
+                        }
+                        
+                        if (rememberMe) {
+                            const date = new Date();
+                            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+                            document.cookie = `saved_username=${username}; expires=${date.toUTCString()}; path=/`;
+                        } else {
+                            document.cookie = 'saved_username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        }
+                        
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const redirectUrl = urlParams.get('redirect');
+                        
+                        window.location.href = redirectUrl || '/dashboard';
                     } else {
                         showMessage('오류: ' + result.detail, 'error');
                     }

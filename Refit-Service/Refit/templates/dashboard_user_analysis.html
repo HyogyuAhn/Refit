@@ -1,0 +1,356 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}사용자 분석 - Refit 대시보드{% endblock %}
+
+{% block header_title %}
+<h1>사용자 분석</h1>
+<p>Refit 사용자들의 행동 패턴과 질문 트렌드를 통해 서비스 개선에 필요한 통찰력을 얻을 수 있습니다.</p>
+{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block page_description %}{% endblock %}
+
+{% block additional_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+<style>
+  .user-card {
+    border-radius: 10px;
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s;
+  }
+  
+  .user-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .user-stat {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .user-stat-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    width: 130px;
+  }
+  
+  .user-stat-value {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+  }
+  
+  .user-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .user-email {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  
+  .filter-wrapper {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--card-shadow);
+  }
+  
+  .search-input {
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    width: 100%;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+  }
+  
+  .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+  }
+  
+  .badge-blue {
+    background-color: rgba(13, 110, 253, 0.2);
+    color: #0d6efd;
+  }
+  
+  .badge-green {
+    background-color: rgba(25, 135, 84, 0.2);
+    color: #198754;
+  }
+  
+  .badge-orange {
+    background-color: rgba(255, 143, 0, 0.2);
+    color: #ff8f00;
+  }
+  
+  .badge-red {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+  }
+  
+  .user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .filter-row {
+      flex-direction: column;
+    }
+    
+    .filter-row > div {
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+    
+    .user-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="filter-wrapper mb-4">
+          <h5 class="mb-3">사용자 필터링</h5>
+          <div class="row align-items-center">
+            <div class="col-md-4 mb-2 mb-md-0">
+              <label for="userSearchInput" class="form-label small text-muted">이름/이메일로 검색</label>
+              <input type="text" id="userSearchInput" class="search-input" placeholder="사용자 이름 또는 이메일 검색">
+            </div>
+            <div class="col-md-4 mb-2 mb-md-0">
+              <label for="sortBy" class="form-label small text-muted">정렬 기준</label>
+              <select id="sortBy" class="form-select">
+                <option value="activity">마지막 활동순</option>
+                <option value="api_calls">API 호출 수순</option>
+                <option value="chat_sessions">채팅 세션순</option>
+                <option value="name">이름순</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="filterActivity" class="form-label small text-muted">활동 상태</label>
+              <select id="filterActivity" class="form-select">
+                <option value="all">모든 사용자</option>
+                <option value="active">활성 사용자만</option>
+                <option value="inactive">비활성 사용자만</option>
+              </select>
+            </div>
+          </div>
+        </div>
+  
+        <div id="userGrid" class="user-grid">
+          <!-- 사용자 카드가 JavaScript로 여기에 삽입 -->
+        </div>
+        
+        <div id="noUsersMessage" style="display: none;" class="empty-state">
+          <i class="fas fa-users-slash empty-icon"></i>
+          <h3>사용자 데이터가 없습니다</h3>
+          <p>검색 조건을 변경하거나 나중에 다시 시도해 주세요.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const users = [
+      {
+        id: 'user1',
+        name: '홍길동',
+        email: 'hong@example.com',
+        api_calls: 156,
+        avg_response_time: 1.2,
+        chat_sessions: 23,
+        last_active: '2025-06-15T14:30:00',
+        status: 'active'
+      },
+      {
+        id: 'user2',
+        name: '김철수',
+        email: 'kim@example.com',
+        api_calls: 89,
+        avg_response_time: 0.9,
+        chat_sessions: 15,
+        last_active: '2025-06-14T09:45:00',
+        status: 'active'
+      },
+      {
+        id: 'user3',
+        name: '이영희',
+        email: 'lee@example.com',
+        api_calls: 214,
+        avg_response_time: 1.8,
+        chat_sessions: 42,
+        last_active: '2025-06-16T11:20:00',
+        status: 'active'
+      },
+      {
+        id: 'user4',
+        name: '박민지',
+        email: 'park@example.com',
+        api_calls: 27,
+        avg_response_time: 1.1,
+        chat_sessions: 5,
+        last_active: '2025-06-10T16:05:00',
+        status: 'inactive'
+      },
+      {
+        id: 'user5',
+        name: '정대현',
+        email: 'jung@example.com',
+        api_calls: 342,
+        avg_response_time: 2.3,
+        chat_sessions: 67,
+        last_active: '2025-06-16T10:15:00',
+        status: 'active'
+      }
+    ];
+    
+    renderUsers(users);
+    
+    document.getElementById('userSearchInput').addEventListener('input', filterUsers);
+    document.getElementById('sortBy').addEventListener('change', filterUsers);
+    document.getElementById('filterActivity').addEventListener('change', filterUsers);
+    
+    function filterUsers() {
+      const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
+      const sortValue = document.getElementById('sortBy').value;
+      const activityFilter = document.getElementById('filterActivity').value;
+      
+      let filteredUsers = users.filter(user => {
+        const matchesSearch = user.name.toLowerCase().includes(searchTerm) || 
+                             user.email.toLowerCase().includes(searchTerm);
+        
+        const matchesActivity = activityFilter === 'all' || 
+                               (activityFilter === 'active' && user.status === 'active') ||
+                               (activityFilter === 'inactive' && user.status === 'inactive');
+        
+        return matchesSearch && matchesActivity;
+      });
+      
+      filteredUsers.sort((a, b) => {
+        switch(sortValue) {
+          case 'api_calls':
+            return b.api_calls - a.api_calls;
+          case 'chat_sessions':
+            return b.chat_sessions - a.chat_sessions;
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'activity':
+          default:
+            return new Date(b.last_active) - new Date(a.last_active);
+        }
+      });
+      
+      renderUsers(filteredUsers);
+    }
+    
+    function renderUsers(userList) {
+      const userGrid = document.getElementById('userGrid');
+      const noUsersMessage = document.getElementById('noUsersMessage');
+      
+      userGrid.innerHTML = '';
+      
+      if (userList.length === 0) {
+        userGrid.style.display = 'none';
+        noUsersMessage.style.display = 'block';
+        return;
+      }
+      
+      userGrid.style.display = 'grid';
+      noUsersMessage.style.display = 'none';
+      
+      userList.forEach(user => {
+        const userCard = document.createElement('div');
+        userCard.className = 'user-card';
+        
+        const lastActive = new Date(user.last_active);
+        const formattedDate = `${lastActive.getFullYear()}-${String(lastActive.getMonth() + 1).padStart(2, '0')}-${String(lastActive.getDate()).padStart(2, '0')}`;
+        const formattedTime = `${String(lastActive.getHours()).padStart(2, '0')}:${String(lastActive.getMinutes()).padStart(2, '0')}`;
+        
+        let responseTimeBadge = '';
+        
+        if (user.avg_response_time < 1.0) {
+          responseTimeBadge = `<span class="stat-badge badge-green">${user.avg_response_time}초</span>`;
+        } else if (user.avg_response_time < 2.0) {
+          responseTimeBadge = `<span class="stat-badge badge-blue">${user.avg_response_time}초</span>`;
+        } else {
+          responseTimeBadge = `<span class="stat-badge badge-orange">${user.avg_response_time}초</span>`;
+        }
+        
+        userCard.innerHTML = `
+          <div class="user-header">
+            <div>
+              <h3 class="user-name">${user.name}</h3>
+              <div class="user-email">${user.email}</div>
+            </div>
+            <div>
+              <span class="status-badge ${user.status === 'active' ? 'status-active' : 'status-inactive'}">
+                <i class="far ${user.status === 'active' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                ${user.status === 'active' ? '활성 상태' : '비활성 상태'}
+              </span>
+            </div>
+          </div>
+          
+          <div class="user-stats">
+            <div class="user-stat">
+              <span class="user-stat-label">사용자 ID</span>
+              <span class="user-stat-value">${user.id}</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-label">총 API 호출 수</span>
+              <span class="user-stat-value">${user.api_calls}</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-label">평균 응답 시간</span>
+              <span class="user-stat-value">${responseTimeBadge}</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-label">총 채팅 세션</span>
+              <span class="user-stat-value">${user.chat_sessions}</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-label">마지막 활동</span>
+              <span class="user-stat-value">${formattedDate} ${formattedTime}</span>
+            </div>
+          </div>
+        `;
+        
+        userGrid.appendChild(userCard);
+      });
+    }
+  });
+</script>
+{% endblock %}

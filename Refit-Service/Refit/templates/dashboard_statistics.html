@@ -1,0 +1,897 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}서비스 통계 - Refit 대시보드{% endblock %}
+
+{% block header_title %}
+<h1>서비스 통계</h1>
+<p>웹사이트 방문자와의 상호작용 통계를 확인하고 분석하세요. API 호출 현황, 사용자 질문 패턴 및 서비스 사용량에 대한 통계 데이터를 확인할 수 있습니다.</p>
+{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block page_description %}{% endblock %}
+
+{% block additional_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 2rem;
+  }
+  
+  .stats-card {
+    border-radius: 10px;
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s;
+  }
+  
+  .stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .stats-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .filter-wrapper {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--card-shadow);
+  }
+  
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .summary-card {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    text-align: center;
+  }
+  
+  .summary-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .icon-blue {
+    color: #0d6efd;
+  }
+  
+  .icon-green {
+    color: #198754;
+  }
+  
+  .icon-orange {
+    color: #ff8f00;
+  }
+  
+  .icon-purple {
+    color: #6f42c1;
+  }
+  
+  .summary-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  .summary-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  
+  @media (max-width: 768px) {
+    .filter-row {
+      flex-direction: column;
+    }
+    
+    .filter-row > div {
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+    
+    .summary-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .stats-card {
+    height: 100%;
+    border-radius: 10px;
+    transition: all 0.3s;
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  
+  .stats-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stats-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .chart-container.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .chart-container.loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid rgba(0, 123, 255, 0.2);
+    border-top: 4px solid #0d6efd;
+    border-radius: 50%;
+    z-index: 11;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .stats-header {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .stats-help {
+    background-color: #f8f9fa;
+    border-radius: 0 0 10px 10px;
+  }
+  
+  .timerange-selector {
+    margin: 1.5rem 0;
+  }
+  
+  .feature-icon-small {
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .metric-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.08);
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+  }
+  
+  .cursor-pointer {
+    cursor: pointer;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-content">
+  <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+    <i class="fas fa-info-circle me-2"></i> 현재 표시된 데이터는 예시용이며, 실제 서비스 데이터는 API 연동 후 표시됩니다.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  
+  <div class="filter-wrapper">
+    <h5 class="mb-3">통계 필터링</h5>
+    <div class="row filter-row">
+      <div class="col-md-4 mb-2 mb-md-0">
+        <label for="dateRange" class="form-label small text-muted">기간 선택</label>
+        <select id="dateRange" class="form-select">
+          <option value="7">지난 7일</option>
+          <option value="30" selected>지난 30일</option>
+          <option value="90">지난 90일</option>
+          <option value="180">지난 6개월</option>
+          <option value="365">지난 1년</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-2 mb-md-0">
+        <label for="apiKeyFilter" class="form-label small text-muted">API 키 필터</label>
+        <select id="apiKeyFilter" class="form-select">
+          <option value="all" selected>모든 API 키</option>
+          <option value="key1">API 키 1</option>
+          <option value="key2">API 키 2</option>
+          <option value="key3">API 키 3</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small text-muted">&nbsp;</label>
+        <button id="refreshStats" class="btn btn-primary w-100">
+          <i class="fas fa-sync-alt"></i> 통계 새로고침
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="summary-icon icon-blue">
+        <i class="fas fa-code"></i>
+      </div>
+      <div class="summary-value" id="totalApiCalls">14,523</div>
+      <div class="summary-label">총 API 호출 수</div>
+      <div class="summary-help text-muted small mt-2">
+        <i class="fas fa-info-circle"></i> 선택한 기간 내 모든 API 요청 수
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon icon-green">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="summary-value" id="totalUsers">342</div>
+      <div class="summary-label">총 사용자 수</div>
+      <div class="summary-help text-muted small mt-2">
+        <i class="fas fa-info-circle"></i> 서비스를 사용한 고유 사용자
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon icon-orange">
+        <i class="fas fa-comment-dots"></i>
+      </div>
+      <div class="summary-value" id="totalChatSessions">685</div>
+      <div class="summary-label">총 채팅 세션</div>
+      <div class="summary-help text-muted small mt-2">
+        <i class="fas fa-info-circle"></i> 생성된 모든 채팅방 수
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon icon-purple">
+        <i class="fas fa-bolt"></i>
+      </div>
+      <div class="summary-value" id="avgResponseTime">1.2</div>
+      <div class="summary-label">평균 응답 시간(초)</div>
+      <div class="summary-help text-muted small mt-2">
+        <i class="fas fa-info-circle"></i> API 응답의 평균 소요 시간
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="stats-card">
+        <div class="stats-header">
+          <h3 class="stats-title">일별 API 요청 수</h3>
+          <span class="stats-subtitle text-muted"><i class="fas fa-calendar-alt me-1"></i> 선택한 기간동안의 데이터</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="apiRequestsChart"></canvas>
+        </div>
+        <div class="stats-help text-muted small mt-2 p-2 border-top">
+          <i class="fas fa-lightbulb me-1"></i> 차트를 클릭하여 특정 날짜의 상세 데이터를 확인할 수 있습니다.
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+      <div class="stats-card">
+        <div class="stats-header">
+          <h3 class="stats-title">사용자 증가 추이</h3>
+          <span class="stats-subtitle text-muted"><i class="fas fa-chart-line me-1"></i> 새로운 사용자 등록 추세</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="userGrowthChart"></canvas>
+        </div>
+        <div class="stats-help text-muted small mt-2 p-2 border-top">
+          <i class="fas fa-lightbulb me-1"></i> 누적 사용자 수 그래프로, 기울기가 글수록 사용자 증가율이 높습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="stats-card">
+        <div class="stats-header">
+          <h3 class="stats-title">API 키별 사용량</h3>
+          <span class="stats-subtitle text-muted"><i class="fas fa-key me-1"></i> 활성화된 API 키별 호출 횟수</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="apiKeyUsageChart"></canvas>
+        </div>
+        <div class="stats-help text-muted small mt-2 p-2 border-top">
+          <i class="fas fa-lightbulb me-1"></i> 각 API 키의 사용 현황을 비교할 수 있습니다. API 키 생성하고 활성화한 후 데이터가 수집됩니다.
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+      <div class="stats-card">
+        <div class="stats-header">
+          <h3 class="stats-title">채팅 응답 성공률</h3>
+          <span class="stats-subtitle text-muted"><i class="fas fa-check-circle me-1"></i> 진행된 채팅 응답 상태</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="chatSuccessRateChart"></canvas>
+        </div>
+        <div class="stats-help text-muted small mt-2 p-2 border-top">
+          <i class="fas fa-lightbulb me-1"></i> 사용자 질문에 대한 응답 성공률과 오류 비율을 보여줍니다.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 통계 개요 카드 영역 -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3 me-3">
+              <i class="bi bi-lightning-charge"></i>
+            </div>
+            <h6 class="card-subtitle text-muted mb-0">총 API 호출</h6>
+          </div>
+          <h2 class="card-title mb-0" id="totalApiCalls">0</h2>
+          <div class="small text-success fw-bold mt-2">
+            <i class="bi bi-graph-up"></i> 21% 증가 (지난달 대비)
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-success bg-gradient fs-4 rounded-3 me-3">
+              <i class="bi bi-people"></i>
+            </div>
+            <h6 class="card-subtitle text-muted mb-0">총 사용자 수</h6>
+          </div>
+          <h2 class="card-title mb-0" id="totalUsers">0</h2>
+          <div class="small text-success fw-bold mt-2">
+            <i class="bi bi-graph-up"></i> 15% 증가 (지난달 대비)
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-info bg-gradient fs-4 rounded-3 me-3">
+              <i class="bi bi-chat-dots"></i>
+            </div>
+            <h6 class="card-subtitle text-muted mb-0">총 채팅 세션</h6>
+          </div>
+          <h2 class="card-title mb-0" id="totalChats">0</h2>
+          <div class="small text-success fw-bold mt-2">
+            <i class="bi bi-graph-up"></i> 18% 증가 (지난달 대비)
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card metric-card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-warning bg-gradient fs-4 rounded-3 me-3">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <h6 class="card-subtitle text-muted mb-0">응답 성공률</h6>
+          </div>
+          <h2 class="card-title mb-0"><span id="successRate">0</span><span class="fs-5">%</span></h2>
+          <div class="small text-success fw-bold mt-2">
+            <i class="bi bi-arrow-up"></i> 3% 향상 (지난달 대비)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const textColor = isDarkMode ? '#e9ecef' : '#333';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    
+    const apiRequestsCtx = document.getElementById('apiRequestsChart').getContext('2d');
+    const apiRequestsChart = new Chart(apiRequestsCtx, {
+      type: 'line',
+      data: {
+        labels: generateDates(30),
+        datasets: [{
+          label: 'API 호출 수',
+          data: generateDailyApiCalls(30),
+          backgroundColor: 'rgba(13, 110, 253, 0.2)',
+          borderColor: 'rgba(13, 110, 253, 1)',
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: '일별 API 호출 현황',
+            font: {
+              size: 16
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: '날짜'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: '호출 수'
+            }
+          }
+        },
+        interaction: {
+          intersect: false,
+        }
+      }
+    });
+    
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    const userGrowthChart = new Chart(userGrowthCtx, {
+      type: 'line',
+      data: {
+        labels: generateDates(30, 'week'),
+        datasets: [{
+          label: '주간 사용자 증가',
+          data: generateWeeklyUserGrowth(30),
+          backgroundColor: 'rgba(25, 135, 84, 0.3)',
+          borderColor: 'rgba(25, 135, 84, 1)',
+          borderWidth: 2,
+          tension: 0.2,
+          pointRadius: 3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: '주간 사용자 증가 추이',
+            font: {
+              size: 16
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: '기간'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: '새로운 사용자 수'
+            }
+          }
+        },
+        interaction: {
+          intersect: false,
+        }
+      }
+    });
+    
+    const apiKeyUsageCtx = document.getElementById('apiKeyUsageChart').getContext('2d');
+    const apiKeyUsageChart = new Chart(apiKeyUsageCtx, {
+      type: 'bar',
+      data: {
+        labels: generateDates(14),
+        datasets: [{
+          label: '채팅 시작 수',
+          data: generateChatStartsData(14),
+          backgroundColor: 'rgba(255, 143, 0, 0.7)',
+          borderColor: 'rgba(255, 143, 0, 1)',
+          borderWidth: 1,
+          borderRadius: 5,
+          maxBarThickness: 40
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: '일별 채팅 시작 수',
+            font: {
+              size: 16
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: '날짜'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: '채팅 시작 수'
+            }
+          }
+        }
+      }
+    });
+    
+    const chatSuccessRateCtx = document.getElementById('chatSuccessRateChart').getContext('2d');
+    const chatSuccessRateChart = new Chart(chatSuccessRateCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['성공', '중단', '실패'],
+        datasets: [{
+          label: '채팅 응답 성공률',
+          data: [78, 12, 10],
+          backgroundColor: [
+            'rgba(25, 135, 84, 0.8)',
+            'rgba(255, 193, 7, 0.8)',
+            'rgba(220, 53, 69, 0.8)'
+          ],
+          borderColor: [
+            'rgba(25, 135, 84, 1)',
+            'rgba(255, 193, 7, 1)',
+            'rgba(220, 53, 69, 1)'
+          ],
+          borderWidth: 1,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          title: {
+            display: true,
+            text: '채팅 응답 성공률',
+            font: {
+              size: 16
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ` ${context.label}: ${context.raw}%`;
+              }
+            }
+          }
+        },
+        cutout: '65%'
+      }
+    });
+    
+    $(document).ready(function() {
+      animateValue('totalApiCalls', 0, 87950, 1500);
+      animateValue('totalUsers', 0, 1245, 1500);
+      animateValue('totalChats', 0, 5872, 1500);
+      animateValue('successRate', 0, 94, 1500);
+      
+      setTimeout(() => {
+        updateChartDataWithAnimation(30);
+      }, 500);
+      
+      $('.stats-card').hover(function() {
+        $(this).addClass('shadow-sm');
+      }, function() {
+        $(this).removeClass('shadow-sm');
+      });
+      
+      $(window).resize(function() {
+        if (apiRequestsChart) {
+          apiRequestsChart.update();
+        }
+        if (userGrowthChart) {
+          userGrowthChart.update();
+        }
+        if (apiKeyUsageChart) {
+          apiKeyUsageChart.update();
+        }
+        if (chatSuccessRateChart) {
+          chatSuccessRateChart.update();
+        }
+      });
+      
+      $('#dateRange').change(function() {
+        const days = parseInt($(this).val());
+        updateChartDataWithAnimation(days);
+      });
+    });
+    
+    document.getElementById('refreshStats').addEventListener('click', function() {
+      const days = parseInt(document.getElementById('dateRange').value);
+      updateCharts(days);
+      
+      animateValue('totalApiCalls', parseInt(document.getElementById('totalApiCalls').textContent.replace(/,/g, '')), generateRandomInt(13000, 16000), 1500);
+      animateValue('totalUsers', parseInt(document.getElementById('totalUsers').textContent), generateRandomInt(300, 380), 1500);
+      animateValue('totalChatSessions', parseInt(document.getElementById('totalChatSessions').textContent), generateRandomInt(600, 750), 1500);
+      
+      const btn = this;
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 업데이트 중...';
+      
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }, 1500);
+    });
+    
+    function generateDailyApiCalls(days) {
+      const baseValues = [120, 90, 150, 180, 100, 70, 60];
+      const trend = 1.1;
+      const data = [];
+      
+      for (let i = 0; i < days; i++) {
+        const dayOfWeek = i % 7;
+        let base = baseValues[dayOfWeek];
+        
+        const trendFactor = Math.pow(trend, Math.floor(i / 7));
+        base = Math.floor(base * trendFactor);
+        
+        const variation = Math.random() * 0.3 - 0.15;
+        const value = Math.floor(base * (1 + variation));
+        
+        data.push(Math.max(20, value));
+      }
+      
+      return data;
+    }
+    
+    function generateWeeklyUserGrowth(days) {
+      const weeklyBase = [15, 22, 18, 25, 30];
+      const data = [];
+      
+      for (let i = 0; i < days; i++) {
+        const weekIndex = Math.floor(i / 7) % weeklyBase.length;
+        let value;
+        
+        if (i % 7 === 0) {
+          value = weeklyBase[weekIndex] + Math.floor(Math.random() * 10);
+        } else if (i % 7 === 5 || i % 7 === 6) {
+          value = Math.floor(weeklyBase[weekIndex] * 0.4) + Math.floor(Math.random() * 5);
+        } else {
+          value = Math.floor(weeklyBase[weekIndex] * 0.7) + Math.floor(Math.random() * 8);
+        }
+        
+        data.push(value);
+      }
+      
+      return data;
+    }
+    
+    function generateChatStartsData(days) {
+      const baseValues = [65, 58, 80, 95, 75, 45, 40];
+      const data = [];
+      
+      for (let i = 0; i < days; i++) {
+        const dayOfWeek = i % 7;
+        let base = baseValues[dayOfWeek];
+        
+        const variation = Math.random() * 0.25 - 0.1;
+        const value = Math.floor(base * (1 + variation));
+        
+        data.push(value);
+      }
+      
+      return data;
+    }
+
+    function updateCharts(days) {
+      apiRequestsChart.data.labels = generateDates(days);
+      apiRequestsChart.data.datasets[0].data = generateDailyApiCalls(days);
+      apiRequestsChart.update();
+      
+      userGrowthChart.data.labels = generateDates(days, days > 30 ? 'week' : 'day');
+      userGrowthChart.data.labels = generateDates(days, days > 30 ? 'week' : 'day');
+      userGrowthChart.data.datasets[0].data = generateWeeklyUserGrowth(days);
+      userGrowthChart.update();
+      
+      const chatDays = Math.min(days, 14);
+      apiKeyUsageChart.data.labels = generateDates(chatDays);
+      apiKeyUsageChart.data.datasets[0].data = generateChatStartsData(chatDays);
+      apiKeyUsageChart.update();
+    }
+    
+    function updateChartDataWithAnimation(days) {
+      $('.chart-container').addClass('loading');
+      
+      setTimeout(() => {
+      setTimeout(() => {
+        updateCharts(days);
+        $('.chart-container').removeClass('loading');
+      }, 400);
+    }
+    
+    function generateDates(days, format = 'day') {
+      const dates = [];
+      const today = new Date();
+      
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        
+        if (format === 'week' && days > 14) {
+      
+          if (i % 7 === 0 || i === days - 1 || i === 0) {
+            dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+          } else {
+            dates.push('');
+          }
+        } else if (format === 'month' && days > 30) {
+          if (date.getDate() === 1 || i === days - 1 || i === 0) {
+            dates.push(`${date.getMonth() + 1}월`);
+          } else {
+            dates.push('');
+          }
+        } else {
+          dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+        }
+      }
+      
+      return dates;
+    }
+    
+    function generateRandomData(count, min, max) {
+      const data = [];
+      
+      for (let i = 0; i < count; i++) {
+        data.push(Math.floor(Math.random() * (max - min + 1)) + min);
+      }
+      
+      return data;
+    }
+    
+    function generateCumulativeData(count, minIncrease, maxIncrease, startValue) {
+      let current = startValue;
+      const data = [current];
+      
+      for (let i = 1; i < count; i++) {
+        const increase = Math.floor(Math.random() * (maxIncrease - minIncrease + 1)) + minIncrease;
+        current += increase;
+        data.push(current);
+      }
+      
+      return data;
+    }
+
+    function generateRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    function animateValue(id, start, end, duration) {
+      const obj = document.getElementById(id);
+      const range = end - start;
+      const minTimer = 50;
+      let stepTime = Math.abs(Math.floor(duration / range));
+      stepTime = Math.max(stepTime, minTimer);
+      
+      const startTime = new Date().getTime();
+      const endTime = startTime + duration;
+      let timer;
+      
+      function run() {
+        const now = new Date().getTime();
+        const remaining = Math.max((endTime - now) / duration, 0);
+        const value = Math.round(end - (remaining * range));
+        obj.textContent = value.toLocaleString();
+        if (value === end) {
+          clearInterval(timer);
+        }
+      }
+      
+      timer = setInterval(run, stepTime);
+      run();
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Refit - 개인정보 관리{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='dashboard_profile.css') }}?v={{ range(1, 10000) | random }}">
+{% endblock %}
+
+{% block header_title %}
+  <h1>개인정보 관리</h1>
+  <p>개인정보 및 카테고리를 관리할 수 있습니다.</p>
+{% endblock %}
+
+{% block main_content %}
+  <div class="profile-content">
+    <!-- 비밀번호 인증 폼 (초기에 표시) -->
+    <div class="auth-container" id="auth-container">
+      <div class="auth-card">
+        <h2>본인 인증</h2>
+        <p>개인정보 변경을 위해 비밀번호를 입력해주세요.</p>
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="auth-password">비밀번호</label>
+            <input type="password" id="auth-password" name="password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">인증하기</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 개인정보 수정 폼 (인증 후 표시) -->
+    <div class="profile-container" id="profile-container" style="display:none;">
+      <div class="profile-section">
+        <h2>기본 정보</h2>
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="fullname">이름</label>
+            <input type="text" id="fullname" name="fullname" value="{{ user.fullname }}">
+            <p class="input-helper">사업자 대표님의 실명을 입력해주세요.</p>
+          </div>
+          
+          <div class="form-group">
+            <label for="business-name">사업자명</label>
+            <input type="text" id="business-name" name="business_name" value="{{ user.business_name }}" readonly>
+            <p class="input-helper">사업자명은 변경할 수 없습니다</p>
+          </div>
+          
+          <div class="form-group">
+            <label for="profile-email">이메일</label>
+            <input type="email" id="profile-email" name="email" value="{{ user.email }}" readonly>
+            <p class="input-helper">이메일은 변경할 수 없습니다</p>
+          </div>
+          
+          <h2>비밀번호 변경</h2>
+          <div class="form-group">
+            <label for="new-password">새 비밀번호</label>
+            <input type="password" id="new-password" name="new_password">
+          </div>
+          
+          <div class="form-group">
+            <label for="confirm-password">비밀번호 확인</label>
+            <input type="password" id="confirm-password" name="confirm_password">
+          </div>
+          
+          <h2>카테고리 관리</h2>
+          <div class="form-group">
+            <label for="categories">카테고리</label>
+            <div class="categories-container">
+              <div class="categories-input-group">
+                <input type="text" id="category-input" placeholder="새 카테고리">
+                <button type="button" id="add-category-btn" class="btn btn-small">추가</button>
+              </div>
+              <div class="categories-list" id="categories-list">
+                {% if user.categories %}
+                  {% for category in user.categories.split(',') %}
+                    <div class="category-item">
+                      <span class="category-text">{{ category.strip() }}</span>
+                      <span class="category-remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </span>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+              <input type="hidden" id="categories" name="categories" value="{{ user.categories }}">
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">정보 수정</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block additional_js %}
+  <script src="{{ url_for('static', path='js/dashboard_profile.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}

@@ -6,6 +6,7 @@
     <title>Refit - 회원가입</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='auth.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='favicon.png') }}?v={{ range(1, 10000) | random }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .category-input-group {
@@ -96,7 +97,7 @@
                     </div>
                 </div>
                 
-                <button type="submit" class="btn btn-primary auth-button" id="register-button" disabled>회원가입</button>
+                <button type="submit" class="btn btn-primary auth-button" id="register-button" disabled><span id="button-text">회원가입</span><span id="button-spinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span></button>
                 
                 <div class="form-links">
                     <a href="/login" class="login-link">이미 계정이 있으신가요? <span>로그인</span></a>
@@ -277,6 +278,14 @@
                 const messageElement = document.getElementById('auth-message');
                 messageElement.style.display = 'none';
                 
+                const registerButton = document.getElementById('register-button');
+                const buttonText = document.getElementById('button-text');
+                const buttonSpinner = document.getElementById('button-spinner');
+                
+                registerButton.disabled = true;
+                buttonText.style.display = 'none';
+                buttonSpinner.style.display = 'inline-block';
+                
                 const categoriesArray = Array.from(categoryChips.querySelectorAll('.category-chip span'))
                     .map(span => span.textContent.trim());
                 
@@ -313,6 +322,10 @@
                     }, 2000);
                     
                 } catch (error) {
+                    buttonText.style.display = 'inline-block';
+                    buttonSpinner.style.display = 'none';
+                    registerButton.disabled = false;
+                    
                     messageElement.textContent = error.message;
                     messageElement.className = 'auth-message error';
                     messageElement.style.display = 'block';

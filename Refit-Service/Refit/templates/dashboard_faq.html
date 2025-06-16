@@ -1,0 +1,478 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}자주 묻는 질문 - Refit 대시보드{% endblock %}
+
+{% block page_title %}자주 묻는 질문{% endblock %}
+
+{% block page_description %}Refit 서비스 사용 중 자주 발생하는 질문과 답변을 찾아보세요. 사용자들이 자주 요청하는 정보를 관리하고 챗봇이 효율적으로 응답할 수 있도록 합니다.{% endblock %}
+
+{% block additional_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+<style>
+  .faq-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    background-color: #f9fafb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s ease;
+  }
+  
+  .faq-container {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  
+  .faq-item {
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: rgba(0, 0, 0, 0.08) 0px 2px 4px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+  }
+  
+  .faq-item:hover {
+    box-shadow: var(--card-shadow-hover);
+  }
+  
+  .faq-question {
+    padding: 1.25rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-color);
+    border: none;
+    background-color: var(--card-bg);
+    width: 100%;
+    text-align: left;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+  }
+  
+  .faq-question:hover {
+    background-color: var(--card-bg-hover);
+  }
+  
+  .faq-question.active {
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--primary-color-light);
+  }
+  
+  .faq-answer {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+    opacity: 0;
+    line-height: 1.6;
+  }
+  
+  .faq-answer.show {
+    padding: 1.5rem;
+    max-height: 500px;
+    opacity: 1;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .faq-icon {
+    transition: transform 0.3s ease;
+  }
+  
+  .faq-icon.rotate {
+    transform: rotate(180deg);
+  }
+  
+  .faq-category {
+    margin-bottom: 2.5rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: rgba(0, 0, 0, 0.04) 0px 3px 6px;
+  }
+  
+  .faq-category-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--primary-color);
+    color: var(--primary-color);
+  }
+  
+  .faq-search {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+  
+  .faq-search input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    border-radius: 50px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: all 0.3s ease;
+  }
+  
+  .faq-search input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+  }
+  
+  .faq-search i {
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    font-size: 1.1rem;
+  }
+  
+  .faq-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  
+  .faq-tab {
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  .faq-tab:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  }
+  
+  .faq-tab.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 3px 6px rgba(var(--primary-color-rgb), 0.3);
+  }
+  
+  .no-results {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+  }
+  
+  .add-faq-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 10px;
+  }
+  
+  .modal-header, .modal-footer {
+    border-color: var(--border-color);
+  }
+  
+  .form-control, .form-select {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+
+  <div class="faq-container">
+    <div class="faq-actions">
+    </div>
+    
+    <div class="faq-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="faqSearch" placeholder="질문 검색하기...">
+    </div>
+    
+    <div class="faq-tabs">
+      <div class="faq-tab active" data-category="all">전체</div>
+      <div class="faq-tab" data-category="general">일반</div>
+      <div class="faq-tab" data-category="api">API</div>
+      <div class="faq-tab" data-category="chat">채팅</div>
+      <div class="faq-tab" data-category="billing">결제</div>
+    </div>
+
+    <div id="faqList">
+      <!-- 일반 카테고리 -->
+      <div class="faq-category" data-category="general">
+        <h3 class="faq-category-title">일반</h3>
+        
+        <div class="faq-item" data-category="general">
+          <button class="faq-question">
+            <span>Refit은 어떤 서비스인가요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Refit은 AI 기반의 고객 지원 솔루션입니다. 웹사이트에 간편하게 설치할 수 있는 챗봇을 제공하여 방문자의 질문에 즉시 응답하고, 필요한 경우 실시간 채팅 지원을 연결해 드립니다.</p>
+            <p>빠른 응답으로 고객 만족도를 높이고 매출 증대에 도움이 됩니다.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" data-category="general">
+          <button class="faq-question">
+            <span>Refit 서비스는 어떻게 시작하나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Refit 서비스 시작은 매우 간단합니다. 회원가입 후 대시보드에서 API 키를 발급받고, 제공되는 설치 코드를 웹사이트에 삽입하기만 하면 됩니다.</p>
+            <p>추가적인 개발 지식이나 복잡한 설정이 필요하지 않습니다. 5분 이내에 여러분의 웹사이트에 AI 챗봇을 설치할 수 있습니다.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- API 카테고리 -->
+      <div class="faq-category" data-category="api">
+        <h3 class="faq-category-title">API 관련</h3>
+        
+        <div class="faq-item" data-category="api">
+          <button class="faq-question">
+            <span>API 키는 어디서 확인할 수 있나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>API 키는 대시보드의 'API 관리' 메뉴에서 확인하실 수 있습니다. 처음 서비스를 시작할 때 자동으로 API 키가 발급되며, 필요한 경우 이 페이지에서 키를 재발급하거나 관리할 수 있습니다.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" data-category="api">
+          <button class="faq-question">
+            <span>API 호출 한도는 어떻게 되나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>API 호출 한도는 사용 중인 요금제에 따라 다릅니다. 무료 플랜의 경우 월 1,000회 호출로 제한되며, 프로 플랜은 월 10,000회, 비즈니스 플랜은 월 50,000회까지 가능합니다.</p>
+            <p>필요에 따라 맞춤형 엔터프라이즈 플랜을 통해 더 높은 한도를 설정할 수 있습니다.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 채팅 카테고리 -->
+      <div class="faq-category" data-category="chat">
+        <h3 class="faq-category-title">채팅 관련</h3>
+        
+        <div class="faq-item" data-category="chat">
+          <button class="faq-question">
+            <span>채팅 기록은 얼마나 오래 보관되나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>채팅 기록은 기본적으로 90일 동안 보관됩니다. 프로 및 비즈니스 요금제 사용자는 최대 1년까지 채팅 기록을 보관할 수 있으며, 엔터프라이즈 요금제는 보관 기간을 사용자 지정할 수 있습니다.</p>
+            <p>채팅 기록은 대시보드의 '채팅 관리' 섹션에서 확인하고 관리할 수 있습니다.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" data-category="chat">
+          <button class="faq-question">
+            <span>채팅 세션을 수동으로 삭제할 수 있나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>네, 채팅 세션은 대시보드의 '채팅 관리' 섹션에서 언제든지 수동으로 삭제할 수 있습니다. 개별 채팅 세션 또는 여러 세션을 한 번에 선택하여 삭제할 수 있습니다.</p>
+            <p>또한 특정 기간이 지난 채팅 세션을 자동으로 삭제하도록 설정할 수도 있습니다.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" data-category="chat">
+          <button class="faq-question">
+            <span>채팅 위젯의 디자인을 변경할 수 있나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>네, 채팅 위젯의 디자인은 다양한 방식으로 커스터마이징할 수 있습니다. 색상, 폰트, 아이콘, 메시지 텍스트 등을 변경할 수 있으며, 이러한 설정은 대시보드의 '채팅 관리' > '위젯 설정' 메뉴에서 관리할 수 있습니다.</p>
+            <p>프로 이상의 요금제에서는 CSS를 통한 고급 커스터마이징도 지원합니다.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 결제 카테고리 -->
+      <div class="faq-category" data-category="billing">
+        <h3 class="faq-category-title">결제 관련</h3>
+        
+        <div class="faq-item" data-category="billing">
+          <button class="faq-question">
+            <span>요금제는 언제든지 변경할 수 있나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>네, 언제든지 요금제를 업그레이드하거나 다운그레이드할 수 있습니다. 업그레이드의 경우 즉시 적용되며, 남은 기간에 대한 차액이 일할 계산되어 청구됩니다. 다운그레이드는 현재 결제 주기가 끝난 후 다음 결제 주기부터 적용됩니다.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" data-category="billing">
+          <button class="faq-question">
+            <span>환불 정책은 어떻게 되나요?</span>
+            <i class="fas fa-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>결제 후 7일 이내에 요청하시면 전액 환불이 가능합니다. 7일 이후에는 미사용 기간에 대해 일할 계산된 금액을 환불해 드립니다. 환불 요청은 대시보드의 '결제 관리' 메뉴 또는 고객 지원 이메일(support@refit.ai)을 통해 접수해 주세요.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results-message text-center py-4 d-none">
+        <i class="fas fa-search-minus fa-2x mb-3 text-muted"></i>
+        <p>검색 결과가 없습니다. 다른 키워드로 검색해 보세요.</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const faqSearch = document.getElementById('faqSearch');
+    const faqItems = document.querySelectorAll('.faq-item');
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    const faqTabs = document.querySelectorAll('.faq-tab');
+    const noResultsMessage = document.querySelector('.no-results-message');
+    
+    const firstQuestion = document.querySelector('.faq-question');
+    if (firstQuestion) {
+        const firstAnswer = firstQuestion.nextElementSibling;
+        const firstIcon = firstQuestion.querySelector('.faq-icon');
+        
+        firstAnswer.classList.add('show');
+        firstIcon.classList.add('rotate');
+        firstQuestion.classList.add('active');
+    }
+    
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', () => {
+            const answer = question.nextElementSibling;
+            const icon = question.querySelector('.faq-icon');
+            
+            answer.classList.toggle('show');
+            icon.classList.toggle('rotate');
+            question.classList.toggle('active');
+            
+            faqQuestions.forEach(otherQuestion => {
+                if (otherQuestion !== question) {
+                    const otherAnswer = otherQuestion.nextElementSibling;
+                    const otherIcon = otherQuestion.querySelector('.faq-icon');
+                    
+                    otherAnswer.classList.remove('show');
+                    otherIcon.classList.remove('rotate');
+                    otherQuestion.classList.remove('active');
+                }
+            });
+        });
+    });
+    
+    faqSearch.addEventListener('input', filterFAQs);
+    
+    faqTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            faqTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.getAttribute('data-category');
+            filterByCategory(category);
+        });
+    });
+    
+    function filterFAQs() {
+        const searchTerm = faqSearch.value.toLowerCase();
+        const activeCategory = document.querySelector('.faq-tab.active').getAttribute('data-category');
+        
+        let visibleCount = 0;
+        
+        document.querySelectorAll('.faq-category').forEach(category => {
+            const categoryName = category.getAttribute('data-category');
+            let categoryItemsVisible = 0;
+            
+            if (activeCategory === 'all' || categoryName === activeCategory) {
+                category.style.display = 'block';
+                
+                category.querySelectorAll('.faq-item').forEach(item => {
+                    const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+                    const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                    
+                    if (searchTerm === '' || question.includes(searchTerm) || answer.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                        categoryItemsVisible++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                if (categoryItemsVisible === 0) {
+                    category.style.display = 'none';
+                }
+            } else {
+                category.style.display = 'none';
+            }
+        });
+    
+        if (visibleCount === 0) {
+            noResultsMessage.classList.remove('d-none');
+        } else {
+            noResultsMessage.classList.add('d-none');
+        }
+    }
+    
+    function filterByCategory(category) {
+        document.querySelectorAll('.faq-category').forEach(categoryElem => {
+            const categoryName = categoryElem.getAttribute('data-category');
+            
+            if (category === 'all' || categoryName === category) {
+                categoryElem.style.display = 'block';
+                
+                categoryElem.querySelectorAll('.faq-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+            } else {
+                categoryElem.style.display = 'none';
+            }
+        });
+        
+        if (faqSearch.value) {
+            filterFAQs();
+        } else {
+            noResultsMessage.classList.add('d-none');
+        }
+        
+        const visibleItems = document.querySelectorAll('.faq-category[style="display: block"] .faq-item[style="display: block"]');
+        if (visibleItems.length > 0) {
+            const firstVisibleQuestion = visibleItems[0].querySelector('.faq-question');
+            if (firstVisibleQuestion) {
+                firstVisibleQuestion.click();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

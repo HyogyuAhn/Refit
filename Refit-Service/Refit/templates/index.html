@@ -9,6 +9,7 @@
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
 </head>
 <body class="scroll-snap-container">
   <!-- 스크롤 네비게이션 -->
@@ -92,7 +93,7 @@
         <div class="step" data-aos="fade-up">
           <div class="step-number">1</div>
           <div class="step-image">
-            <img src="https://images.unsplash.com/photo-1555421689-491a97ff2f31?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8cmVnaXN0ZXJ8ZW58MHx8MHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" alt="계정 등록" loading="lazy">
+            <img src="https://images.unsplash.com/photo-1606636660488-16a8646f012c?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTB8fHJlZ2lzdHJhdGlvbnxlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" alt="계정 등록" loading="lazy">
           </div>
           <div class="step-content">
             <h3>계정 등록</h3>
@@ -368,5 +369,74 @@
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
   <script src="{{ request.url_for('static', path='js/main.js') }}"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const REFIT_API_KEY = 'oPbQMr5C68h1S4x3QsY-qKTEwWrQARVmtohlHl-zg70';
+      
+      const chatContainer = document.createElement('div');
+      chatContainer.id = 'refit-fixed-chat';
+      chatContainer.style.position = 'fixed';
+      chatContainer.style.bottom = '24px';
+      chatContainer.style.right = '24px';
+      chatContainer.style.zIndex = '999999';
+      
+      const chatButton = document.createElement('div');
+      chatButton.id = 'refit-chat-btn';
+      chatButton.style.width = '60px';
+      chatButton.style.height = '60px';
+      chatButton.style.borderRadius = '50%';
+      chatButton.style.backgroundColor = '#4e73df';
+      chatButton.style.color = 'white';
+      chatButton.style.display = 'flex';
+      chatButton.style.alignItems = 'center';
+      chatButton.style.justifyContent = 'center';
+      chatButton.style.cursor = 'pointer';
+      chatButton.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+      chatButton.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      chatButton.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"></path>
+          <path d="M6 12h12v2H6zm0-3h12v2H6zm0-3h12v2H6z"></path>
+        </svg>
+      `;
+      
+      chatButton.onmouseover = function() {
+        this.style.transform = 'scale(1.05)';
+      };
+      chatButton.onmouseout = function() {
+        this.style.transform = 'scale(1)';
+      };
+      
+      chatButton.onclick = function() {
+        if (window.RefitWidget) {
+          if (window.refitChatInstance) {
+            window.refitChatInstance.toggleChat();
+          } else {
+            if (typeof RefitChat === 'function') {
+              window.refitChatInstance = new RefitChat({
+                apiKey: REFIT_API_KEY,
+                position: 'bottom-right',
+                theme: 'light'
+              });
+              setTimeout(function() {
+                window.refitChatInstance.toggleChat();
+              }, 100);
+            }
+          }
+        }
+      };
+      
+      chatContainer.appendChild(chatButton);
+      document.body.appendChild(chatContainer);
+      
+      const script = document.createElement('script');
+      script.src = "{{ request.url_for('static', path='widget/widget.js') }}";
+      script.setAttribute('data-api-key', REFIT_API_KEY);
+      script.setAttribute('data-position', 'bottom-right');
+      script.setAttribute('data-theme', 'light');
+      document.body.appendChild(script);
+    });
+  </script>
 </body>
 </html>

@@ -6,6 +6,7 @@
   <title>Refit - 대시보드</title>
   <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}?v={{ range(1, 10000) | random }}">
   <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}?v={{ range(1, 10000) | random }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='favicon.png') }}?v={{ range(1, 10000) | random }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,15 +48,21 @@
         <div class="menu-category-title">사용자</div>
         <ul class="menu-items">
           <li class="menu-item">
-            <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-user-edit"></i></span>
-              <span>개인정보 변경</span>
+            <a href="/dashboard" class="menu-link active">
+              <span class="menu-icon"><i class="fas fa-home"></i></span>
+              <span>대시보드 홈</span>
             </a>
           </li>
           <li class="menu-item">
-            <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-tags"></i></span>
-              <span>카테고리 관리</span>
+            <a href="/dashboard/profile" class="menu-link">
+              <span class="menu-icon"><i class="fas fa-user"></i></span>
+              <span>개인정보 관리</span>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/dashboard/api-management" class="menu-link">
+              <span class="menu-icon"><i class="fas fa-key"></i></span>
+              <span>API 관리</span>
             </a>
           </li>
         </ul>
@@ -67,45 +74,33 @@
         <ul class="menu-items">
           <li class="menu-item">
             <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-question-circle"></i></span>
+              <span class="menu-icon"><i class="far fa-question-circle"></i></span>
               <span>자주 묻는 질문</span>
             </a>
           </li>
           <li class="menu-item">
-            <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-plus-circle"></i></span>
-              <span>질문 추가하기</span>
-            </a>
-          </li>
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-edit"></i></span>
-              <span>질문 관리하기</span>
+            <a href="/dashboard/chat-sessions" class="menu-link">
+              <span class="menu-icon"><i class="far fa-comments"></i></span>
+              <span>채팅 관리</span>
             </a>
           </li>
         </ul>
       </div>
       
-      <!-- API 메뉴 -->
+      <!-- 통계 메뉴 -->
       <div class="menu-category">
-        <div class="menu-category-title">API</div>
+        <div class="menu-category-title">통계 및 분석</div>
         <ul class="menu-items">
           <li class="menu-item">
             <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-cogs"></i></span>
-              <span>API 관리하기</span>
+              <span class="menu-icon"><i class="far fa-chart-bar"></i></span>
+              <span>사용 통계</span>
             </a>
           </li>
           <li class="menu-item">
             <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-chart-bar"></i></span>
-              <span>API 사용량 보기</span>
-            </a>
-          </li>
-          <li class="menu-item">
-            <a href="#" class="menu-link">
-              <span class="menu-icon"><i class="fas fa-credit-card"></i></span>
-              <span>API 결제하기</span>
+              <span class="menu-icon"><i class="fas fa-analytics"></i></span>
+              <span>사용자 분석</span>
             </a>
           </li>
         </ul>
@@ -122,75 +117,76 @@
       </div>
 
       <div class="dashboard-content">
-        <div class="dashboard-card">
-          <div class="dashboard-card-header">
-            <div class="dashboard-card-title"><i class="fas fa-key"></i> API 키 관리</div>
-          </div>
-          <div class="dashboard-card-content">
-            <div class="dashboard-card-value">활성화됨</div>
-            <div class="dashboard-card-description">생성된 API 키를 확인하고 관리할 수 있습니다.</div>
-          </div>
-          <div class="dashboard-card-footer">
-            <a href="#" class="dashboard-card-action">
-              관리하기 <i class="fas fa-arrow-right"></i>
-            </a>
-          </div>
-        </div>
-
-        <div class="dashboard-card">
-          <div class="dashboard-card-header">
-            <div class="dashboard-card-title"><i class="fas fa-tags"></i> 카테고리 관리</div>
-          </div>
-          <div class="dashboard-card-content">
-            <div class="dashboard-card-description">등록된 카테고리</div>
-            <div class="category-tags">
-              {% if user.categories %}
-                {% for category in user.categories.split(',') %}
-                  <span class="category-tag">{{ category.strip() }}</span>
-                {% endfor %}
-              {% else %}
-                <span class="category-tag">등록된 카테고리가 없습니다</span>
-              {% endif %}
+        <div class="card-grid">
+          <div class="dashboard-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title"><i class="fas fa-key"></i> API 키 관리</div>
+            </div>
+            <div class="dashboard-card-content">
+              <div class="dashboard-card-value" id="api-key-status">미사용중</div>
+              <div class="dashboard-card-description">API 키를 발급받아 채팅 위젯을 사용할 수 있습니다.</div>
+            </div>
+            <div class="dashboard-card-footer">
+              <a href="/dashboard/api-management" class="dashboard-card-action">
+                관리하기 <i class="fas fa-arrow-right"></i>
+              </a>
             </div>
           </div>
-          <div class="dashboard-card-footer">
-            <a href="#" class="dashboard-card-action">
-              편집하기 <i class="fas fa-arrow-right"></i>
-            </a>
-          </div>
-        </div>
 
-        <div class="dashboard-card">
-          <div class="dashboard-card-header">
-            <div class="dashboard-card-title"><i class="fas fa-question-circle"></i> 질문 관리</div>
+          <div class="dashboard-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title"><i class="fas fa-tags"></i> 카테고리 관리</div>
+            </div>
+            <div class="dashboard-card-content">
+              <div class="dashboard-card-description">등록된 카테고리</div>
+              <div class="category-tags">
+                {% if user.categories %}
+                  {% for category in user.categories.split(',') %}
+                    <span class="category-tag">{{ category.strip() }}</span>
+                  {% endfor %}
+                {% else %}
+                  <span class="category-tag">등록된 카테고리가 없습니다</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="dashboard-card-footer">
+              <a href="/dashboard/profile" class="dashboard-card-action">
+                편집하기 <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
           </div>
-          <div class="dashboard-card-content">
-            <div class="dashboard-card-value">0</div>
-            <div class="dashboard-card-description">등록된 질문을 관리하고 새로운 질문을 추가할 수 있습니다.</div>
-          </div>
-          <div class="dashboard-card-footer">
-            <a href="#" class="dashboard-card-action">
-              관리하기 <i class="fas fa-arrow-right"></i>
-            </a>
-          </div>
-        </div>
 
-        <div class="dashboard-card">
-          <div class="dashboard-card-header">
-            <div class="dashboard-card-title"><i class="fas fa-user-cog"></i> 개인정보 관리</div>
+          <div class="dashboard-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title"><i class="fas fa-comments"></i> 채팅 세션</div>
+            </div>
+            <div class="dashboard-card-content">
+              <div class="dashboard-card-value" id="chat-sessions-count">0</div>
+              <div class="dashboard-card-description">채팅 세션을 통해 고객 문의를 관리할 수 있습니다.</div>
+            </div>
+            <div class="dashboard-card-footer">
+              <a href="/dashboard/chat-sessions" class="dashboard-card-action">
+                관리하기 <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
           </div>
-          <div class="dashboard-card-content">
-            <div class="dashboard-card-description">이름: {{ user.fullname }}</div>
-            <div class="dashboard-card-description">사업자: {{ user.business_name }}</div>
-            <div class="dashboard-card-description">아이디: {{ user.username }}</div>
-            <div class="dashboard-card-description">이메일: {{ user.email }}</div>
+
+          <div class="dashboard-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title"><i class="fas fa-user-cog"></i> 개인정보 관리</div>
+            </div>
+            <div class="dashboard-card-content">
+              <div class="dashboard-card-description">이름: {{ user.fullname }}</div>
+              <div class="dashboard-card-description">사업자: {{ user.business_name }}</div>
+              <div class="dashboard-card-description">아이디: {{ user.username }}</div>
+              <div class="dashboard-card-description">이메일: {{ user.email }}</div>
+            </div>
+            <div class="dashboard-card-footer">
+              <a href="/dashboard/profile" class="dashboard-card-action">
+                수정하기 <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
           </div>
-          <div class="dashboard-card-footer">
-            <a href="#" class="dashboard-card-action">
-              수정하기 <i class="fas fa-arrow-right"></i>
-            </a>
-          </div>
-        </div>
       </div>
     </main>
   </div>

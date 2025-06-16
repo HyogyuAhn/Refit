@@ -1,0 +1,199 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Refit - 대시보드 홈{% endblock %}
+
+{% block page_title %}{% endblock %}
+
+{% block page_description %}{% endblock %}
+
+{% block main_content %}
+<div class="card-grid">
+  <!-- API 키 관리 카드 -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-title"><i class="fas fa-key"></i> API 키 관리</div>
+    </div>
+    <div class="dashboard-card-content">
+      <div class="dashboard-card-value" id="api-key-status">미사용중</div>
+      <div class="dashboard-card-description">API 키를 발급받아 채팅 위젯을 사용할 수 있습니다.</div>
+    </div>
+    <div class="dashboard-card-footer">
+      <a href="/dashboard/api-management" class="dashboard-card-action">
+        관리하기 <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- 카테고리 관리 카드 -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-title"><i class="fas fa-tags"></i> 카테고리 관리</div>
+    </div>
+    <div class="dashboard-card-content">
+      <div class="dashboard-card-description">등록된 카테고리</div>
+      <div class="category-tags">
+        {% if user.categories %}
+          {% for category in user.categories.split(',') %}
+            <span class="category-tag">{{ category.strip() }}</span>
+          {% endfor %}
+        {% else %}
+          <span class="category-tag">등록된 카테고리가 없습니다</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="dashboard-card-footer">
+      <a href="/dashboard/profile" class="dashboard-card-action">
+        관리하기 <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- 채팅 세션 카드 -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-title"><i class="fas fa-comments"></i> 채팅 세션</div>
+    </div>
+    <div class="dashboard-card-content">
+      <div class="dashboard-card-value" id="chat-session-count">0</div>
+      <div class="dashboard-card-description">오늘 발생한 채팅 세션 수입니다.</div>
+    </div>
+    <div class="dashboard-card-footer">
+      <a href="/dashboard/chat-sessions" class="dashboard-card-action">
+        세션 관리 <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- FAQ 관리 카드 -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-title"><i class="fas fa-question-circle"></i> 자주 묻는 질문</div>
+    </div>
+    <div class="dashboard-card-content">
+      <div class="dashboard-card-value" id="faq-count">0</div>
+      <div class="dashboard-card-description">등록된 FAQ 항목 수입니다.</div>
+    </div>
+    <div class="dashboard-card-footer">
+      <a href="/dashboard/faq" class="dashboard-card-action">
+        FAQ 관리 <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- 통계 카드 -->
+  <div class="dashboard-card">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-title"><i class="fas fa-chart-line"></i> 사용 통계</div>
+    </div>
+    <div class="dashboard-card-content">
+      <div class="dashboard-card-description">API 호출 통계</div>
+      <div class="mini-chart" id="api-calls-chart">
+        <div class="stats-container">
+          <div class="stat-item">
+            <div class="stat-label">API 요청 수</div>
+            <div class="stat-value" id="api-calls-count">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">사용자 수</div>
+            <div class="stat-value" id="user-count">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">채팅 세션 수</div>
+            <div class="stat-value" id="total-chat-count">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dashboard-card-footer">
+      <a href="/dashboard/statistics" class="dashboard-card-action">
+        상세 통계 <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/api/v1/api-keys/status')
+    .then(response => response.json())
+    .then(data => {
+      const apiKeyStatus = document.getElementById('api-key-status');
+      if (data.active_keys > 0) {
+        apiKeyStatus.textContent = '활성화';
+        apiKeyStatus.classList.add('status-active');
+      } else {
+        apiKeyStatus.textContent = '미사용중';
+        apiKeyStatus.classList.add('status-inactive');
+      }
+    })
+    .catch(error => {
+      const apiKeyStatus = document.getElementById('api-key-status');
+      apiKeyStatus.textContent = '미사용중';
+      apiKeyStatus.classList.add('status-inactive');
+      console.error('API 키 상태를 가져오는 중 오류 발생:', error);
+    });
+  
+  fetch('/api/v1/chat-sessions/count/today')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('chat-session-count').textContent = data.count || 0;
+    })
+    .catch(error => {
+      document.getElementById('chat-session-count').textContent = '0';
+      console.error('채팅 세션 수를 가져오는 중 오류 발생:', error);
+    });
+    
+  fetch('/api/v1/faq/count')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('faq-count').textContent = data.count || 0;
+    })
+    .catch(error => {
+      document.getElementById('faq-count').textContent = '0';
+      console.error('FAQ 수를 가져오는 중 오류 발생:', error);
+    });
+    
+  fetch('/api/v1/statistics/overview')
+    .then(response => response.json())
+    .then(data => {
+      if (data && data.api_calls) {
+        document.getElementById('api-calls-count').textContent = data.api_calls;
+        document.getElementById('user-count').textContent = data.users;
+        document.getElementById('total-chat-count').textContent = data.chat_sessions;
+      }
+    })
+    .catch(error => {
+      console.error('통계 데이터를 가져오는 중 오류 발생:', error);
+    });
+});
+</script>
+
+<style>
+  .stats-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+  }
+  
+  .stat-item {
+    text-align: center;
+    flex: 1;
+  }
+  
+  .stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+</style>
+{% endblock %}

@@ -8,8 +8,10 @@ Refit-Service/Refit/routers/__pycache__
 Refit.db
 
 Refit-Service/.env
+Refit-Service/Refit/chatgpt.py
 Refit-Service/Refit/database.py
 Refit-Service/Refit/security.py
+Refit-Service/Refit/chatgpt
 
 models/re/tracking/tracking_system.py
 models/re/data/db/firestore_reader.py

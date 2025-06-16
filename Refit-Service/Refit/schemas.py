@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, EmailStr
 import re
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Union
+from datetime import datetime
 
 class UserBase(BaseModel):
     username: str
@@ -39,7 +40,7 @@ class User(UserBase):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserLogin(BaseModel):
     username: str
@@ -53,3 +54,105 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+
+class ApiKeyBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+
+
+class ApiKeyCreate(ApiKeyBase):
+    user_password: str = Field(..., min_length=8)
+
+
+class ApiKeyResponse(ApiKeyBase):
+    id: int
+    created_at: datetime
+    last_used_at: Optional[datetime] = None
+    is_active: bool
+    request_count: int
+    
+    class Config:
+        from_attributes = True
+
+
+class ApiKeyDetail(ApiKeyResponse):
+    token: str
+
+
+class ApiKeyUpdate(BaseModel):
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ApiRequestBase(BaseModel):
+    api_key_id: int
+    endpoint: str
+
+
+class ApiRequestCreate(ApiRequestBase):
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    response_status: Optional[int] = None
+    processing_time: Optional[float] = None
+
+
+class ApiRequestResponse(ApiRequestBase):
+    id: int
+    request_time: datetime
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    response_status: Optional[int] = None
+    processing_time: Optional[float] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class ChatSessionBase(BaseModel):
+    visitor_id: Optional[str] = None
+    category: Optional[str] = None
+
+
+class ChatSessionCreate(ChatSessionBase):
+    api_key_id: Optional[int] = None
+
+
+class ChatSessionResponse(ChatSessionBase):
+    id: int
+    session_id: str
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+    status: str
+    
+    class Config:
+        from_attributes = True
+
+
+class ChatSessionUpdate(BaseModel):
+    category: Optional[str] = None
+    status: Optional[str] = None
+    ended_at: Optional[datetime] = None
+
+class ChatMessageBase(BaseModel):
+    chat_session_id: int
+    sender_type: str
+    content: str
+
+
+class ChatMessageCreate(ChatMessageBase):
+    needs_review: Optional[bool] = False
+
+
+class ChatMessageResponse(ChatMessageBase):
+    id: int
+    sent_at: datetime
+    needs_review: bool
+    is_answered: bool
+    
+    class Config:
+        from_attributes = True
+
+
+class ChatMessageUpdate(BaseModel):
+    needs_review: Optional[bool] = None
+    is_answered: Optional[bool] = None

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+  <title>{% block title %}Refit - 대시보드{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}?v={{ range(1, 10000) | random }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='dashboard.css') }}?v={{ range(1, 10000) | random }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/notification.css') }}?v={{ range(1, 10000) | random }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='favicon.png') }}?v={{ range(1, 10000) | random }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    .mobile-menu-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      z-index: var(--header-z-index);
+      transition: all 0.3s ease;
+    }
+    
+    .mobile-menu-toggle:hover {
+      transform: scale(1.05);
+    }
+    
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--navbar-height);
+      background-color: var(--card-bg);
+      box-shadow: var(--shadow-sm);
+      z-index: var(--header-z-index);
+    }
+    
+    .page-header {
+      padding: 0.5rem 0;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    
+    .page-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border-color) 0%, var(--border-color) 50%, transparent 100%);
+    }
+    
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+    }
+    
+    .page-description {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 0;
+      max-width: 650px;
+    }
+    
+    @media (max-width: var(--mobile-breakpoint)) {
+      .dashboard-sidebar {
+        position: fixed;
+        left: -280px;
+        transition: left var(--sidebar-transition);
+        z-index: var(--sidebar-z-index);
+        top: var(--navbar-height);
+        bottom: 0;
+        box-shadow: var(--shadow-md);
+        width: 250px;
+      }
+      
+      .dashboard-sidebar.show {
+        left: 0;
+      }
+      
+      .dashboard-main {
+        width: 100%;
+        padding-left: 0;
+      }
+      
+      .mobile-menu-toggle {
+        display: flex;
+      }
+      
+      .dashboard-content {
+        padding: 16px;
+      }
+      
+      .card-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      
+      .container-fluid {
+        padding: 0.5rem;
+      }
+    }
+    
+    .dashboard-content {
+      padding: 20px;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    .dashboard-section {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .api-keys-table-container {
+      overflow-x: auto;
+      width: 100%;
+    }
+    
+    .api-keys-table {
+      width: 100%;
+      min-width: 700px;
+    }
+  </style>
+  {% block additional_css %}{% endblock %}
+</head>
+
+<body>
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="/">
+        <img src="{{ url_for('static', path='img/Refit_home.png') }}" alt="Refit 로고" class="logo" />
+      </a>
+      <nav class="nav-menu">
+        <div class="mobile-toggle" id="mobile-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
+        <button onclick="logoutUser()" class="btn btn-login">로그아웃</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <!-- 사이드바 메뉴 -->
+    <aside class="dashboard-sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-user">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="user-info">
+            <div class="user-name">{{ user.fullname }}</div>
+            <div class="user-role">{{ user.business_name }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 사용자 메뉴 -->
+      <div class="menu-category">
+        <div class="menu-category-title">사용자</div>
+        <ul class="menu-items">
+          <li class="menu-item">
+            <a href="/dashboard" class="menu-link {% if request.url.path == '/dashboard' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-chart-bar"></i></span>
+              <span>대시보드 홈</span>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/dashboard/profile" class="menu-link {% if request.url.path == '/dashboard/profile' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-lock"></i></span>
+              <span>개인정보 관리</span>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/dashboard/api-management" class="menu-link {% if request.url.path == '/dashboard/api-management' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-key"></i></span>
+              <span>API 관리</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- 질문 메뉴 -->
+      <div class="menu-category">
+        <div class="menu-category-title">질문 관리</div>
+        <ul class="menu-items">
+          <li class="menu-item">
+            <a href="/dashboard/faq" class="menu-link {% if request.url.path == '/dashboard/faq' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-question-circle"></i></span>
+              <span>자주 묻는 질문</span>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/dashboard/chat-sessions" class="menu-link {% if request.url.path == '/dashboard/chat-sessions' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-comment-dots"></i></span>
+              <span>채팅 관리</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- 통계 메뉴 -->
+      <div class="menu-category">
+        <div class="menu-category-title">통계 및 분석</div>
+        <ul class="menu-items">
+          <li class="menu-item">
+            <a href="/dashboard/statistics" class="menu-link {% if request.url.path == '/dashboard/statistics' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-chart-line"></i></span>
+              <span>사용 통계</span>
+            </a>
+          </li>
+          <li class="menu-item">
+            <a href="/dashboard/user-analysis" class="menu-link {% if request.url.path == '/dashboard/user-analysis' %}active{% endif %}">
+              <span class="menu-icon"><i class="fas fa-users"></i></span>
+              <span>사용자 분석</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="dashboard-main">
+      {% if request.url.path == '/dashboard' %}
+      <div class="dashboard-header">
+        <div class="dashboard-title">
+          {% block header_title %}
+          <h1>대시보드</h1>
+          <p>Refit 서비스 관리 화면입니다.</p>
+          {% endblock %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="dashboard-content">
+        <!-- 페이지 헤더 영역 -->
+        <div class="page-header">
+          <div class="container">
+            <h1 class="page-title">{% block page_title %}대시보드{% endblock %}</h1>
+            <p class="page-description">{% block page_description %}Refit 대시보드에 오신 것을 환영합니다{% endblock %}</p>
+          </div>
+        </div>
+        
+        <!-- 메인 콘텐츠 -->
+        <div class="page-content">
+          {% block main_content %}{% endblock %}
+        </div>
+      </div>
+    </main>
+  </div>
+
+  {% block modals %}{% endblock %}
+
+  <!-- 모바일용 메뉴 토글 버튼 -->
+  <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+    <i class="fas fa-bars" id="menu-toggle-icon"></i>
+  </div>
+
+  <script src="{{ url_for('static', path='js/auth-common.js') }}?v={{ range(1, 10000) | random }}"></script>
+  <script src="{{ url_for('static', path='js/dashboard.js') }}?v={{ range(1, 10000) | random }}"></script>
+  <script>
+    document.getElementById('mobile-menu-toggle').addEventListener('click', function() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('show');
+      
+      const icon = this.querySelector('i');
+      if (sidebar.classList.contains('show')) {
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-times');
+      } else {
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+      }
+    });
+    
+    document.addEventListener('click', function(event) {
+      const sidebar = document.getElementById('sidebar');
+      const mobileToggle = document.getElementById('mobile-menu-toggle');
+      
+      if (window.innerWidth <= 768 && 
+          sidebar.classList.contains('active') &&
+          !sidebar.contains(event.target) &&
+          !mobileToggle.contains(event.target)) {
+        sidebar.classList.remove('active');
+        const icon = mobileToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+      }
+    });
+    
+    function logoutUser() {
+      fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          localStorage.removeItem('access_token');
+          document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          sessionStorage.clear();
+          
+          window.location.href = '/login';
+        } else {
+          throw new Error('로그아웃 중 오류가 발생했습니다');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification(error.message, 'error');
+      });
+    }
+    
+    function showNotification(message, type = 'success') {
+      let notification = document.querySelector('.notification');
+      
+      if (!notification) {
+        notification = document.createElement('div');
+        notification.className = 'notification';
+        document.body.appendChild(notification);
+      }
+      
+      notification.className = `notification ${type}`;
+      
+      notification.textContent = message;
+      
+      notification.style.display = 'block';
+      notification.style.opacity = '1';
+      
+      setTimeout(function() {
+        notification.style.opacity = '0';
+        setTimeout(function() {
+          notification.style.display = 'none';
+        }, 300);
+      }, 5000);
+    };
+  </script>
+  {% block additional_js %}{% endblock %}
+</body>
+</html>

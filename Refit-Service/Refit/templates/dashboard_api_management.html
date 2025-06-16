@@ -1,0 +1,792 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}API 관리 - Refit 대시보드{% endblock %}
+
+{% block page_title %}API 키 관리{% endblock %}
+
+{% block page_description %}현재 발급된 API 키를 관리하고 새로운 키를 발급받을 수 있습니다. 채팅 서비스와 연동하려면 활성화된 API 키가 필요합니다.{% endblock %}
+
+{% block additional_css %}
+<style>
+  .api-keys-list {
+    margin-top: 1.5rem;
+  }
+  
+  .api-keys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .api-key-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .api-key-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .api-key-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .api-key-name .key-icon {
+    color: #0d6efd;
+    font-size: 1rem;
+  }
+  
+  .api-key-meta {
+    margin-bottom: 1.5rem;
+    color: #4b5563;
+    font-size: 0.875rem;
+  }
+  
+  .api-key-meta-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  
+  .api-key-meta-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .api-key-meta-label {
+    color: #6b7280;
+  }
+  
+  .api-key-meta-value {
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .api-key-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    gap: 0.25rem;
+  }
+  
+  .status-active {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+  }
+  
+  .status-inactive {
+    background-color: rgba(156, 163, 175, 0.1);
+    color: #6b7280;
+  }
+  
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .tooltip .tooltip-text {
+    visibility: hidden;
+    width: 120px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.75rem;
+  }
+  
+  .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  .api-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  
+  .stat-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    min-width: 200px;
+    border-left: 4px solid;
+  }
+  
+  .stat-card.total-keys {
+    border-left-color: #0d6efd;
+  }
+  
+  .stat-card.active-keys {
+    border-left-color: #16a34a;
+  }
+  
+  .stat-card.usage-count {
+    border-left-color: #f59e0b;
+  }
+  
+  .stat-title {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .stat-icon {
+    font-size: 1rem;
+    opacity: 0.7;
+  }
+  
+  .code-block {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    white-space: pre-wrap;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+    position: relative;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #f9fafb;
+    border-radius: 12px;
+    margin: 2rem 0;
+  }
+  
+  .loading-spinner i {
+    font-size: 2rem;
+    color: #0d6efd;
+    margin-bottom: 1rem;
+    animation: spin 1.5s linear infinite;
+  }
+  
+  .loading-spinner span {
+    color: #6b7280;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: rgba(239, 68, 68, 0.05);
+    border-radius: 12px;
+    margin: 2rem 0;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+  
+  .error-icon {
+    font-size: 2.5rem;
+    color: #ef4444;
+    margin-bottom: 1rem;
+  }
+  
+  .error-message {
+    color: #111827;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    max-width: 80%;
+  }
+  
+  .copy-code-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .copy-code-btn:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .no-data-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: #f9fafb;
+    border-radius: 12px;
+    margin: 2rem 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .no-data-message .no-data-icon {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+  
+  .no-data-message p {
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+  }
+  
+  .modal {
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal.active {
+    display: flex;
+    opacity: 1;
+  }
+  
+  .modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+  
+  .modal.active .modal-content {
+    transform: translateY(0);
+  }
+  
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827;
+  }
+  
+  .modal-close {
+    font-size: 1.5rem;
+    color: #9ca3af;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  
+  .modal-close:hover {
+    color: #111827;
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+  }
+  
+  .form-control:focus {
+    border-color: #0d6efd;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  }
+  
+  .form-text {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.85rem;
+  }
+  
+  .text-muted {
+    color: #6b7280;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  
+  .error-message {
+    padding: 0.75rem;
+    border-radius: 6px;
+    background-color: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    display: none;
+  }
+  
+  .token-display {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .token-display input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px 0 0 6px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+    background-color: #fff;
+  }
+  
+  .token-display button {
+    padding: 0.75rem 1rem;
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .token-display button:hover {
+    background-color: #e5e7eb;
+  }
+  
+  .api-key-token-container {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+  }
+  
+  @media (max-width: 768px) {
+    .api-keys-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .api-stats {
+      flex-direction: column;
+    }
+    
+    .stat-card {
+      min-width: 100%;
+    }
+  }
+
+  .api-keys-table-container {
+    display: none !important;
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .info-list {
+    padding-left: 1.5rem;
+  }
+  
+  .info-list li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .actions {
+    white-space: nowrap;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .notification {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    transition: bottom 0.3s ease-in-out;
+    z-index: 1000;
+  }
+  
+  .notification.show {
+    bottom: 20px;
+  }
+  
+  .notification-success {
+    border-left: 4px solid #22c55e;
+  }
+  
+  .notification-error {
+    border-left: 4px solid #ef4444;
+  }
+</style>
+{% endblock %}
+
+{% block header_title %}
+<h1>API 키 관리</h1>
+<p>API 키를 통해 채팅 위젯을 웹사이트에 삽입할 수 있습니다.</p>
+{% endblock %}
+
+{% block main_content %}
+
+      <div class="dashboard-content">
+        <!-- API 키 통계 요약 -->
+        <div class="api-stats" id="apiStats">
+          <div class="stat-card total-keys">
+            <div class="stat-title">전체 API 키</div>
+            <div class="stat-value" id="totalKeysCount">0 <span class="stat-icon"><i class="far fa-key"></i></span></div>
+          </div>
+          <div class="stat-card active-keys">
+            <div class="stat-title">활성화된 키</div>
+            <div class="stat-value" id="activeKeysCount">0 <span class="stat-icon"><i class="far fa-check-circle"></i></span></div>
+          </div>
+          <div class="stat-card usage-count">
+            <div class="stat-title">총 사용 횟수</div>
+            <div class="stat-value" id="totalUsageCount">0 <span class="stat-icon"><i class="far fa-chart-line"></i></span></div>
+          </div>
+        </div>
+
+        <!-- API 키 목록 섹션 -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>API 키 관리</h2>
+            <button id="createApiKeyBtn" class="btn btn-primary">
+              <i class="far fa-plus"></i> 새 API 키 생성
+            </button>
+          </div>
+          
+          <div id="apiKeysList" class="api-keys-list">
+            <!-- 비어있는 상태 메시지 -->
+            <div id="noApiKeysMessage" class="no-data-message">
+              <div class="no-data-icon"><i class="far fa-key"></i></div>
+              <p>등록된 API 키가 없습니다.</p>
+              <p>채팅 위젯을 웹사이트에 연동하려면 API 키를 생성해주세요.</p>
+              <button class="btn btn-primary mt-3" onclick="document.getElementById('createApiKeyBtn').click()">
+                <i class="far fa-plus"></i> API 키 생성하기
+              </button>
+            </div>
+            
+            <!-- 카드 그리드 레이아웃 -->
+            <div id="apiKeysGrid" class="api-keys-grid">
+              <!-- API 키 카드가 여기에 동적으로 추가됨 -->
+            </div>
+            
+            <!-- 기존 테이블은 호환성을 위해 숨김 처리 -->
+            <div class="api-keys-table-container" style="display: none;">
+              <table id="apiKeysTable" class="api-keys-table">
+                <thead>
+                  <tr>
+                    <th>이름</th>
+                    <th>생성일</th>
+                    <th>마지막 사용</th>
+                    <th>사용 횟수</th>
+                    <th>상태</th>
+                    <th>작업</th>
+                  </tr>
+                </thead>
+                <tbody id="apiKeysTableBody">
+                  <!-- API 키 목록이 여기에 동적으로 추가됨 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        <!-- 위젯 사용 안내 섹션 -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>채팅 위젯 사용 방법</h2>
+          </div>
+          
+          <div class="section-content">
+            <p>웹사이트에 아래 코드를 삽입하여 채팅 아이콘을 띄울 수 있습니다. YOUR_API_KEY를 발급받은 키로 교체하세요.</p>
+            
+            <div class="code-block" id="widget-code-container">
+              <pre><code id="widgetCodeExample">로딩중...</code></pre>
+            </div>
+            
+            <h3>채팅 위젯 사용 시 주의사항</h3>
+            <ul class="info-list">
+              <li>발급받은 API 키는 안전하게 보관하세요.</li>
+              <li>키가 노출된 경우 즉시 삭제하고 새로 발급받아야 합니다.</li>
+              <li>API 키는 도메인 제한이 없으므로 어떤 웹사이트에서도 사용할 수 있습니다.</li>
+              <li>발급된 키의 일일 사용량은 제한되어 있으며, 초과 시 추가 요금이 발생할 수 있습니다.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  <!-- API 키 생성 모달 -->
+  <div id="createApiKeyModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>새 API 키 생성</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="createApiKeyError" class="error-message" style="display: none;"></div>
+        <form id="createApiKeyForm">
+          <div class="form-group">
+            <label for="apiKeyName">API 키 이름</label>
+            <input type="text" id="apiKeyName" name="name" class="form-control" placeholder="API 키 이름 (예: 홈페이지 위젯)" required>
+            <small class="form-text text-muted">이 이름은 API 키를 구분하기 위한 용도로 사용됩니다.</small>
+          </div>
+          <div class="form-group">
+            <label for="userPassword">비밀번호 확인</label>
+            <input type="password" id="userPassword" name="user_password" class="form-control" placeholder="현재 비밀번호" required>
+            <small class="form-text text-muted">보안을 위해 비밀번호를 확인합니다.</small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelCreateApiKey">취소</button>
+            <button type="submit" class="btn btn-primary" id="submitCreateApiKey">생성하기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- API 키 조회 모달 -->
+  <div id="viewApiKeyModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>API 키 토큰 확인</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="viewApiKeyError" class="error-message" style="display: none;"></div>
+        <form id="viewApiKeyForm">
+          <input type="hidden" id="viewApiKeyId">
+          <div class="form-group">
+            <label for="viewUserPassword">비밀번호 확인</label>
+            <input type="password" id="viewUserPassword" name="user_password" class="form-control" placeholder="현재 비밀번호" required>
+            <small class="form-text text-muted">보안을 위해 비밀번호를 확인합니다.</small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelViewApiKey">취소</button>
+            <button type="submit" class="btn btn-primary" id="submitViewApiKey">확인하기</button>
+          </div>
+        </form>
+        <div id="apiKeyTokenContainer" class="api-key-token-container" style="display: none;">
+          <h4>API 토큰 정보</h4>
+          <div class="token-display">
+            <input type="text" id="apiKeyToken" class="form-control" readonly>
+            <button id="copyApiKeyToken" class="btn btn-outline-secondary">
+              <i class="far fa-copy"></i> 복사
+            </button>
+          </div>
+          <small class="form-text text-warning">이 토큰을 안전하게 보관하세요. 이 창을 닫으면 다시 확인하려면 비밀번호를 입력해야 합니다.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API 키 삭제 모달 -->
+  <div id="deleteApiKeyModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>API 키 삭제</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p class="text-danger">API 키를 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며, 해당 API 키를 사용하는 모든 위젯이 작동하지 않게 됩니다.</p>
+        <div id="deleteApiKeyError" class="error-message" style="display: none;"></div>
+        <form id="deleteApiKeyForm">
+          <input type="hidden" id="deleteApiKeyId">
+          <div class="form-group">
+            <label for="deleteUserPassword">비밀번호 확인</label>
+            <input type="password" id="deleteUserPassword" name="user_password" class="form-control" placeholder="현재 비밀번호" required>
+            <small class="form-text text-muted">보안을 위해 비밀번호를 확인합니다.</small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelDeleteApiKey">취소</button>
+            <button type="submit" class="btn btn-danger" id="confirmDeleteApiKey">삭제하기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- API 키 상태 변경 모달 -->
+  <div class="modal" id="toggleStatusApiKeyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="toggleStatusModalTitle">API 키 상태 변경</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="toggleStatusApiKeyError" class="alert alert-danger" style="display: none;"></div>
+        <div id="toggleStatusApiKeyWarning" class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="toggleStatusWarningText">API 키 상태를 변경하면 해당 키로 인증된 서비스에 영향을 줄 수 있습니다.</span>
+        </div>
+        <form id="toggleStatusApiKeyForm">
+          <input type="hidden" id="toggleStatusApiKeyId">
+          <input type="hidden" id="toggleStatusNewStatus">
+          <div class="form-group">
+            <label for="toggleStatusUserPassword">보안을 위해 비밀번호를 입력하세요</label>
+            <input type="password" id="toggleStatusUserPassword" name="toggleStatusUserPassword" class="form-control" placeholder="현재 비밀번호" required>
+            <small class="form-text text-muted">API 키 상태를 변경하려면 계정 비밀번호가 필요합니다.</small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelToggleStatusApiKey">취소</button>
+            <button type="submit" class="btn btn-primary" id="confirmToggleStatusApiKey">상태 변경</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 알림 토스트 -->
+  <div id="notification" class="notification" style="display: none;">
+    <div class="notification-content">
+      <div class="notification-message">알림 메시지</div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block additional_js %}
+  <script src="{{ url_for('static', path='js/api-keys.js') }}?v={{ range(1, 10000) | random }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = 'none';
+        modal.style.opacity = '0';
+      });
+      
+      window.openModal = function(modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => {
+          modal.style.opacity = '1';
+          modal.querySelector('.modal-content').style.transform = 'translateY(0)';
+        }, 10);
+      };
+      
+      window.closeModal = function(modal) {
+        modal.style.opacity = '0';
+        modal.querySelector('.modal-content').style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          modal.style.display = 'none';
+        }, 300);
+      };
+      
+      window.closeAllModals = function() {
+        document.querySelectorAll('.modal').forEach(modal => {
+          window.closeModal(modal);
+        });
+      };
+      
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(event) {
+          if (event.target === this) {
+            window.closeModal(this);
+          }
+        });
+      });
+      
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          window.closeAllModals();
+        }
+      });
+    });
+  </script>
+{% endblock %}
